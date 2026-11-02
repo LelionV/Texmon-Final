@@ -1,32 +1,20 @@
-import re
 from html import escape
+import re
 
 from playwright.sync_api import sync_playwright
 
 
 def render_pdf(html_string: str, base_url: str = None) -> bytes:
-    """
-    Render HTML into an A4 PDF using Playwright and Chromium.
-    """
-
     if not html_string or not html_string.strip():
         raise ValueError("Cannot generate a PDF from empty HTML.")
 
     if base_url:
         base_tag = f'<base href="{escape(base_url, quote=True)}">'
 
-        if re.search(r"<head[^>]*>", html_string, flags=re.IGNORECASE):
+        if re.search(r"<head[^>]*>", html_string, re.IGNORECASE):
             html_string = re.sub(
                 r"(<head[^>]*>)",
-                rf"\1{base_tag}",
-                html_string,
-                count=1,
-                flags=re.IGNORECASE,
-            )
-        elif re.search(r"<html[^>]*>", html_string, flags=re.IGNORECASE):
-            html_string = re.sub(
-                r"(<html[^>]*>)",
-                rf"\1<head>{base_tag}</head>",
+                lambda match: match.group(1) + base_tag,
                 html_string,
                 count=1,
                 flags=re.IGNORECASE,
@@ -34,74 +22,81 @@ def render_pdf(html_string: str, base_url: str = None) -> bytes:
         else:
             html_string = f"<head>{base_tag}</head>{html_string}"
 
+    playwright = None
+    browser = None
+
     try:
-        with sync_playwright() as playwright:
-            browser = playwright.chromium.launch(
-                headless=True,
-                args=[
-                    "--no-sandbox",
-                    "--disable-dev-shm-usage",
-                    "--disable-gpu",
-                ],
-            )
+        playwright = sync_playwright().start()
 
-            try:
-                page = browser.new_page(
-                    viewport={"width": 1280, "height": 1600},
-                    device_scale_factor=1,
-                )
+        browser = playwright.chromium.launch(
+            headless=True,
+            args=[
+                "--no-sandbox",
+                "--disable-dev-shm-usage",
+                "--disable-gpu",
+            ],
+        )
 
-                page.set_content(
-                    html_string,
-                    wait_until="load",
-                    timeout=60000,
-                )
+        page = browser.new_page(
+            viewport={"width": 1280, "height": 1600},
+            device_scale_factor=1,
+        )
 
-                page.evaluate("""
-                    async () => {
-                        await document.fonts.ready;
+        page.set_content(
+            html_string,
+            wait_until="load",
+            timeout=60000,
+        )
 
-                        await Promise.all(
-                            Array.from(document.images).map(img => {
-                                if (img.complete) {
-                                    return Promise.resolve();
-                                }
+        page.evaluate("""
+            async () => {
+                await document.fonts.ready;
 
-                                return new Promise(resolve => {
-                                    img.addEventListener("load", resolve, {once: true});
-                                    img.addEventListener("error", resolve, {once: true});
-                                });
-                            })
-                        );
-                    }
-                """)
+                await Promise.all(
+                    Array.from(document.images).map(img => {
+                        if (img.complete) return Promise.resolve();
 
-                page.wait_for_timeout(300)
+                        return new Promise(resolve => {
+                            img.addEventListener("load", resolve, {once: true});
+                            img.addEventListener("error", resolve, {once: true});
+                        });
+                    })
+                );
+            }
+        """)
 
-                pdf_bytes = page.pdf(
-                    format="A4",
-                    print_background=True,
-                    prefer_css_page_size=True,
-                    display_header_footer=False,
-                    margin={
-                        "top": "12mm",
-                        "right": "14mm",
-                        "bottom": "15mm",
-                        "left": "14mm",
-                    },
-                )
+        pdf_bytes = page.pdf(
+            format="A4",
+            print_background=True,
+            prefer_css_page_size=True,
+            display_header_footer=False,
+            margin={
+                "top": "12mm",
+                "right": "14mm",
+                "bottom": "15mm",
+                "left": "14mm",
+            },
+        )
 
-                if not pdf_bytes or not pdf_bytes.startswith(b"%PDF"):
-                    raise RuntimeError(
-                        "Chromium did not return a valid PDF document."
-                    )
+        if not pdf_bytes or not pdf_bytes.startswith(b"%PDF"):
+            raise RuntimeError("Invalid PDF generated by Chromium.")
 
-                return pdf_bytes
-
-            finally:
-                browser.close()
+        return pdf_bytes
 
     except Exception as exc:
         raise RuntimeError(
             f"PDF generation failed using Playwright: {exc}"
         ) from exc
+
+    finally:
+        if browser is not None:
+            try:
+                browser.close()
+            except Exception:
+                pass
+
+        if playwright is not None:
+            try:
+                playwright.stop()
+            except Exception:
+                pass
