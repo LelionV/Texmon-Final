@@ -1,0 +1,148 @@
+{% extends "documents/base_document.html" %}
+
+{% block doc_type_label %}RECEIPT{% endblock %}
+{% block document_number_label %}Receipt No:{% endblock %}
+{% block customer_heading %}Received From{% endblock %}
+
+{% block document_content %}
+<style>
+    .receipt-section-heading {
+        font-size: 10pt;
+        font-weight: bold;
+        color: #153465;
+        border-bottom: 1px solid #153465;
+        padding: 0 0 5px 0;
+        margin: 14px 0 8px 0;
+    }
+
+    .doc-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 9pt;
+        margin: 0 0 10px 0;
+    }
+
+    .doc-table th {
+        background-color: #153465;
+        color: #ffffff;
+        font-weight: bold;
+        text-align: left;
+        padding: 8px 7px;
+        border: 1px solid #153465;
+    }
+
+    .doc-table td {
+        padding: 8px 7px;
+        border: 1px solid #d9e0e8;
+        vertical-align: top;
+    }
+
+    .doc-table tbody tr:nth-child(even) {
+        background-color: #f5f7fa;
+    }
+
+    .doc-table .num {
+        text-align: right;
+    }
+
+    .receipt-note {
+        font-size: 9.5pt;
+        line-height: 1.5;
+        margin-top: 12px;
+        padding: 10px 12px;
+        background-color: #f5f7fa;
+        border-left: 3px solid #153465;
+    }
+
+    .receipt-reference {
+        font-weight: bold;
+        color: #153465;
+    }
+
+    .receipt-footer-note {
+        font-size: 8.5pt;
+        color: #555555;
+        margin-top: 18px;
+    }
+</style>
+
+<div class="receipt-section-heading">Payment Details</div>
+
+<table class="doc-table">
+    <thead>
+        <tr>
+            <th style="width: 65%;">Invoice Reference</th>
+            <th class="num" style="width: 35%;">Amount Received ({{ currency_symbol }})</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>
+                <strong>{{ invoice.invoice_number|default:"—" }}</strong>
+            </td>
+            <td class="num">
+                <strong>{{ receipt.amount|floatformat:2 }}</strong>
+            </td>
+        </tr>
+    </tbody>
+</table>
+
+<div class="receipt-note">
+    Received with thanks from
+    <strong>{{ invoice.client.company_name|default:"—" }}</strong>
+    against invoice
+    <span class="receipt-reference">{{ invoice.invoice_number|default:"—" }}</span>.
+</div>
+
+<p class="receipt-footer-note">
+    This receipt acknowledges payment of the amount stated above. Please retain it for your records.
+</p>
+{% endblock %}
+
+{% block totals_block %}
+<style>
+    .receipt-total-wrapper {
+        width: 100%;
+        margin-top: 12px;
+    }
+
+    .receipt-total-table {
+        width: 55%;
+        margin-left: 45%;
+        border-collapse: collapse;
+        font-size: 9.5pt;
+    }
+
+    .receipt-total-table td {
+        padding: 9px 8px;
+        border: 1px solid #d9e0e8;
+    }
+
+    .receipt-total-table .label {
+        text-align: left;
+        font-weight: bold;
+        color: #153465;
+    }
+
+    .receipt-total-table .value {
+        text-align: right;
+        font-weight: bold;
+        white-space: nowrap;
+    }
+
+    .receipt-total-table .grand td {
+        background-color: #153465;
+        color: #ffffff;
+        font-size: 11pt;
+        font-weight: bold;
+        border: 1px solid #153465;
+    }
+</style>
+
+<table class="receipt-total-table">
+    <tr class="grand">
+        <td class="label">Total Received ({{ currency_symbol }}):</td>
+        <td class="value">{{ receipt.amount|floatformat:2 }}</td>
+    </tr>
+</table>
+{% endblock %}

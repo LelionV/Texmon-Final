@@ -1,0 +1,204 @@
+{% extends "base.html" %}
+{% block page_title %}Reports — Profit &amp; Loss{% endblock %}
+{% block content %}
+<style>
+    .kpi-card .kpi-value { font-size: 1.45rem; font-weight: 700; color: #111827; }
+    .kpi-card .kpi-label { font-size: .72rem; color: #6b7280; text-transform: uppercase;
+                            letter-spacing: .04em; font-weight: 600; }
+    .pl-table td { padding: .5rem .75rem; }
+    .pl-table .pl-section td { background: #f8fafc; font-weight: 600; color: #1a7a4c;
+                                text-transform: uppercase; font-size: .72rem; letter-spacing: .04em; }
+    .pl-table .pl-total td { border-top: 2px solid #1a7a4c; font-weight: 700; font-size: 1rem; }
+    .bar-track { background: #eef1f6; border-radius: 4px; height: 8px; overflow: hidden; }
+    .bar-fill { height: 8px; border-radius: 4px; }
+</style>
+
+<form method="get" class="card mb-3">
+    <div class="card-body d-flex flex-wrap align-items-end gap-3">
+        <div>
+            <label class="form-label">Date From</label>
+            {{ form.date_from }}
+        </div>
+        <div>
+            <label class="form-label">Date To</label>
+            {{ form.date_to }}
+        </div>
+        <div>
+            <button type="submit" class="btn btn-primary"><i class="bi bi-funnel me-1"></i>Apply Filter</button>
+        </div>
+        <div class="ms-auto d-flex gap-2">
+            {% if perms.reports.export_reports %}
+            <a href="{% url 'reports:export_excel' %}?{{ querystring }}" class="btn btn-success">
+                <i class="bi bi-file-earmark-excel me-1"></i>Generate Excel Report
+            </a>
+            <a href="{% url 'reports:export_csv' %}?{{ querystring }}" class="btn btn-outline-secondary">
+                <i class="bi bi-filetype-csv me-1"></i>Summary CSV
+            </a>
+            {% endif %}
+        </div>
+    </div>
+    {% if form.errors %}
+    <div class="card-body pt-0"><div class="alert alert-danger py-2 mb-0">{{ form.non_field_errors }}</div></div>
+    {% endif %}
+</form>
+
+<p class="text-muted small">
+    Showing {{ report.date_from }} to {{ report.date_to }}. The Excel export covers this same range
+    and contains a P&amp;L Report sheet plus one sheet each for Quotations, Proforma Invoices,
+    Invoices, Payments and Expenses.
+</p>
+
+{% if report.mixed_currency %}
+<div class="alert alert-warning">
+    <strong>Mixed currencies in this period ({{ report.currencies_used|join:", " }}).</strong>
+    Amounts are added at face value with no conversion, so totals and profit are not meaningful
+    until they are reported in a single currency. Narrow the date range or record the period in one currency.
+</div>
+{% endif %}
+
+<div class="row g-3 mb-4">
+    <div class="col-md-4 col-lg-3">
+        <div class="card kpi-card h-100"><div class="card-body">
+            <div class="kpi-label">Revenue (excl. VAT)</div>
+            <div class="kpi-value">{{ report.revenue_net|floatformat:2 }}</div>
+        </div></div>
+    </div>
+    <div class="col-md-4 col-lg-3">
+        <div class="card kpi-card h-100"><div class="card-body">
+            <div class="kpi-label">Revenue Collected</div>
+            <div class="kpi-value text-success">{{ report.revenue_collected|floatformat:2 }}</div>
+        </div></div>
+    </div>
+    <div class="col-md-4 col-lg-3">
+        <div class="card kpi-card h-100"><div class="card-body">
+            <div class="kpi-label">Outstanding</div>
+            <div class="kpi-value text-danger">{{ report.outstanding|floatformat:2 }}</div>
+        </div></div>
+    </div>
+    <div class="col-md-4 col-lg-3">
+        <div class="card kpi-card h-100"><div class="card-body">
+            <div class="kpi-label">Operating Expenses</div>
+            <div class="kpi-value text-warning">{{ report.operating_expenses|floatformat:2 }}</div>
+        </div></div>
+    </div>
+    <div class="col-md-4 col-lg-3">
+        <div class="card kpi-card h-100"><div class="card-body">
+            <div class="kpi-label">Gross Profit</div>
+            <div class="kpi-value">{{ report.gross_profit|floatformat:2 }}</div>
+            <div class="text-muted small">{{ report.gross_margin_pct }}% margin</div>
+        </div></div>
+    </div>
+    <div class="col-md-4 col-lg-3">
+        <div class="card kpi-card h-100"><div class="card-body">
+            <div class="kpi-label">Net Profit</div>
+            <div class="kpi-value {% if report.net_profit < 0 %}text-danger{% else %}text-success{% endif %}">
+                {{ report.net_profit|floatformat:2 }}
+            </div>
+            <div class="text-muted small">{{ report.net_margin_pct }}% margin</div>
+        </div></div>
+    </div>
+    <div class="col-md-4 col-lg-3">
+        <div class="card kpi-card h-100"><div class="card-body">
+            <div class="kpi-label">Invoices Processed</div>
+            <div class="kpi-value">{{ report.counts.invoices }}</div>
+        </div></div>
+    </div>
+    <div class="col-md-4 col-lg-3">
+        <div class="card kpi-card h-100"><div class="card-body">
+            <div class="kpi-label">Payments Received</div>
+            <div class="kpi-value">{{ report.counts.payments }}</div>
+        </div></div>
+    </div>
+</div>
+
+<div class="row g-3">
+    <div class="col-lg-7">
+        <div class="card h-100"><div class="card-body">
+            <h6 class="card-title">Profit &amp; Loss Statement</h6>
+            <table class="table pl-table mb-0">
+                <tbody>
+                    <tr class="pl-section"><td colspan="2">Revenue</td></tr>
+                    <tr><td><strong>Revenue (excl. VAT)</strong></td><td class="text-end"><strong>{{ report.revenue_net|floatformat:2 }}</strong></td></tr>
+                    <tr><td class="text-muted">VAT charged <span class="small">(not income, excluded from profit)</span></td><td class="text-end text-muted">{{ report.invoiced_vat|floatformat:2 }}</td></tr>
+                    <tr><td class="text-muted">Total billed (incl. VAT)</td><td class="text-end text-muted">{{ report.revenue_invoiced|floatformat:2 }}</td></tr>
+                    <tr><td class="text-muted">Cash collected (incl. VAT)</td><td class="text-end text-muted">{{ report.revenue_collected|floatformat:2 }}</td></tr>
+                    <tr><td class="text-muted">Outstanding / Unpaid</td><td class="text-end text-muted">{{ report.outstanding|floatformat:2 }}</td></tr>
+
+                    <tr class="pl-section"><td colspan="2">Cost of Sales</td></tr>
+                    <tr><td>Cost of Sales <span class="text-muted small">(estimated from item cost prices)</span></td>
+                        <td class="text-end">({{ report.cost_of_sales|floatformat:2 }})</td></tr>
+                    <tr class="pl-total"><td>Gross Profit</td><td class="text-end">{{ report.gross_profit|floatformat:2 }}</td></tr>
+                    <tr><td class="text-muted">Gross Margin</td><td class="text-end text-muted">{{ report.gross_margin_pct }}%</td></tr>
+
+                    <tr class="pl-section"><td colspan="2">Operating Expenses</td></tr>
+                    <tr><td>Approved Expenses</td><td class="text-end">({{ report.operating_expenses|floatformat:2 }})</td></tr>
+                    <tr><td class="text-muted">All Expenses Recorded (incl. unapproved)</td><td class="text-end text-muted">{{ report.expenses_total_all|floatformat:2 }}</td></tr>
+
+                    <tr class="pl-total">
+                        <td>Net Profit</td>
+                        <td class="text-end {% if report.net_profit < 0 %}text-danger{% else %}text-success{% endif %}">
+                            {{ report.net_profit|floatformat:2 }}
+                        </td>
+                    </tr>
+                    <tr><td class="text-muted">Net Margin</td><td class="text-end text-muted">{{ report.net_margin_pct }}%</td></tr>
+                </tbody>
+            </table>
+        </div></div>
+    </div>
+
+    <div class="col-lg-5">
+        <div class="card mb-3"><div class="card-body">
+            <h6 class="card-title">Document Volumes</h6>
+            <table class="table table-sm mb-0">
+                <thead><tr><th>Document</th><th class="text-end">Count</th><th class="text-end">Value</th></tr></thead>
+                <tbody>
+                    <tr><td>Quotations</td><td class="text-end">{{ report.counts.quotations }}</td><td class="text-end">{{ report.quotations_value|floatformat:2 }}</td></tr>
+                    <tr><td>Proforma Invoices</td><td class="text-end">{{ report.counts.proformas }}</td><td class="text-end">{{ report.proformas_value|floatformat:2 }}</td></tr>
+                    <tr><td>Invoices</td><td class="text-end">{{ report.counts.invoices }}</td><td class="text-end">{{ report.revenue_invoiced|floatformat:2 }}</td></tr>
+                    <tr><td>Payments</td><td class="text-end">{{ report.counts.payments }}</td><td class="text-end">{{ report.revenue_collected|floatformat:2 }}</td></tr>
+                    <tr><td>Expenses</td><td class="text-end">{{ report.counts.expenses }}</td><td class="text-end">{{ report.expenses_total_all|floatformat:2 }}</td></tr>
+                </tbody>
+            </table>
+        </div></div>
+
+        <div class="card"><div class="card-body">
+            <h6 class="card-title">Revenue vs Costs</h6>
+            {% if report.revenue_net > 0 %}
+            <div class="mb-3">
+                <div class="d-flex justify-content-between small mb-1">
+                    <span>Revenue (excl. VAT)</span><span>{{ report.revenue_net|floatformat:2 }}</span>
+                </div>
+                <div class="bar-track"><div class="bar-fill" style="width:100%; background:#1a7a4c;"></div></div>
+            </div>
+            <div class="mb-3">
+                <div class="d-flex justify-content-between small mb-1">
+                    <span>Cost of Sales</span><span>{{ report.cost_of_sales|floatformat:2 }}</span>
+                </div>
+                <div class="bar-track">
+                    <div class="bar-fill" style="width:{% widthratio report.cost_of_sales report.revenue_net 100 %}%; background:#2f6fb0;"></div>
+                </div>
+            </div>
+            <div class="mb-3">
+                <div class="d-flex justify-content-between small mb-1">
+                    <span>Operating Expenses</span><span>{{ report.operating_expenses|floatformat:2 }}</span>
+                </div>
+                <div class="bar-track">
+                    <div class="bar-fill" style="width:{% widthratio report.operating_expenses report.revenue_net 100 %}%; background:#d4a017;"></div>
+                </div>
+            </div>
+            <div>
+                <div class="d-flex justify-content-between small mb-1">
+                    <span>Net Profit</span><span>{{ report.net_profit|floatformat:2 }}</span>
+                </div>
+                <div class="bar-track">
+                    <div class="bar-fill" style="width:{% widthratio report.net_profit report.revenue_net 100 %}%;
+                        background:{% if report.net_profit < 0 %}#b3261e{% else %}#2e9e6b{% endif %};"></div>
+                </div>
+            </div>
+            {% else %}
+            <p class="text-muted mb-0">No invoiced revenue in this period.</p>
+            {% endif %}
+        </div></div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,7 @@
+Django>=5.0,<6.0
+djangorestframework
+django-htmx
+xhtml2pdf
+django-simple-history
+openpyxl
+Pillow

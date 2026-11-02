@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Timothy | IT Portfolio</title>
+
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      scroll-behavior: smooth;
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+      line-height: 1.6;
+      background: #f5f7fb;
+      color: #222;
+    }
+
+       nav {
+      position: fixed;
+      top: 0;
+      width: 100%;
+      background: #587cc9;
+      padding: 15px 8%;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 1000;
+    }
+
+    nav h2 {
+      color: #38bdf8;
+    }
+
+    nav ul {
+      display: flex;
+      list-style: none;
+      gap: 25px;
+    }
+
+    nav a {
+      color: white;
+      text-decoration: none;
+      font-weight: bold;
+    }
+
+    nav a:hover {
+      color: #38bdf8;
+    }
+
+        .hero {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 100px 20px 50px;
+      background: linear-gradient(135deg, #111827, #1e3a8a);
+      color: white;
+    }
+
+    .hero h1 {
+      font-size: 3.5rem;
+      margin-bottom: 15px;
+    }
+
+    .hero h1 span {
+      color: #38bdf8;
+    }
+
+    .hero p {
+      font-size: 1.2rem;
+      max-width: 650px;
+      margin: auto;
+    }
+
+    .btn {
+      display: inline-block;
+      margin-top: 25px;
+      padding: 12px 25px;
+      background: #38bdf8;
+      color: #111827;
+      text-decoration: none;
+      border-radius: 6px;
+      font-weight: bold;
+    }
+
+    .btn:hover {
+      background: white;
+    }
+
+    /* Sections */
+    section {
+      padding: 80px 8%;
+    }
+
+    .section-title {
+      text-align: center;
+      margin-bottom: 40px;
+      font-size: 2rem;
+      color: #111827;
+    }
+
+    /* About */
+    .about {
+      max-width: 900px;
+      margin: auto;
+      text-align: center;
+      font-size: 1.1rem;
+    }
+
+   
+    .skills {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 20px;
+    }
+
+    .skill {
+      background: white;
+      padding: 25px;
+      text-align: center;
+      border-radius: 10px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+      font-weight: bold;
+    }
+
+    .skill:hover {
+      transform: translateY(-5px);
+      transition: 0.3s;
+    }
+
+
+    .projects {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 25px;
+    }
+
+    .project {
+      background: white;
+      padding: 25px;
+      border-radius: 10px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+    }
+
+    .project h3 {
+      color: #1e3a8a;
+      margin-bottom: 10px;
+    }
+
+    .project p {
+      margin-bottom: 15px;
+    }
+
+    .project a {
+      color: #000d13;
+      text-decoration: none;
+      font-weight: bold;
+    }
+
+        .experience {
+      max-width: 900px;
+      margin: auto;
+    }
+
+    .job {
+      background: white;
+      padding: 25px;
+      margin-bottom: 20px;
+      border-left: 5px solid #38bdf8;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+    }
+
+        .contact {
+      text-align: center;
+    }
+
+    .contact p {
+      margin: 10px 0;
+    }
+
+    .contact a {
+      color: #0284c7;
+      text-decoration: none;
+    }
+
+      footer {
+      text-align: center;
+      padding: 25px;
+      background: #111827;
+      color: white;
+    }
+
+        @media (max-width: 700px) {
+      nav {
+        flex-direction: column;
+        gap: 10px;
+      }
+
+      nav ul {
+        gap: 12px;
+        flex-wrap: wrap;
+        justify-content: center;
+      }
+
+      .hero h1 {
+        font-size: 2.5rem;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Navigation -->
+  <nav>
+    <h2>Timothy</h2>
+
+    <ul>
+      <li><a href="#home">Home</a></li>
+      <li><a href="#about">About</a></li>
+      <li><a href="#skills">Skills</a></li>
+      <li><a href="#projects">Projects</a></li>
+      <li><a href="#experience">Experience</a></li>
+      <li><a href="#contact">Contact</a></li>
+    </ul>
+  </nav>
+
+
+  <!-- Hero -->
+  <section class="hero" id="home">
+    <div>
+      <h1>Hello, I'm <span>Timothy Albert</span></h1>
+
+      <p>
+        An aspiring IT professional passionate about technology,
+        software development, networking, and solving technical problems.
+      </p>
+
+      <a href="#projects" class="btn">View My Projects</a>
+    </div>
+  </section>
+
+
+  <!-- About -->
+  <section id="about">
+    <h2 class="section-title">About Me</h2>
+
+    <div class="about">
+      <p>
+        I am an aspiring IT professional interested in software development,
+        networking, computer troubleshooting, databases, and business
+        technology. I enjoy learning new technologies and creating practical
+        solutions to real-world problems.
+      </p>
+    </div>
+  </section>
+
+
+  <!-- Skills -->
+  <section id="skills">
+    <h2 class="section-title">My Skills</h2>
+
+    <div class="skills">
+      <div class="skill">💻 Computer Troubleshooting</div>
+      <div class="skill">🌐 Networking</div>
+      <div class="skill">🖥️ Web Development</div>
+      <div class="skill">🐍 Programming</div>
+      <div class="skill">🗄️ Database Management</div>
+      <div class="skill">📊 Microsoft Office</div>
+    </div>
+  </section>
+
+
+  <!-- Projects -->
+  <section id="projects">
+    <h2 class="section-title">My Projects</h2>
+
+    <div class="projects">
+
+      <div class="project">
+        <h3>Inventory Management System</h3>
+
+        <p>
+          A system designed to record products, track stock levels,
+          manage sales, and generate useful reports.
+        </p>
+
+        <p><strong>Technologies:</strong> HTML, CSS, JavaScript, MySQL</p>
+
+        <a href="#">View Project →</a>
+      </div>
+
+
+      <div class="project">
+        <h3>Personal Portfolio Website</h3>
+
+        <p>
+          A responsive personal website created to showcase my
+          skills, education, projects, and professional experience.
+        </p>
+
+        <p><strong>Technologies:</strong> HTML, CSS, JavaScript</p>
+
+        <a href="#">View Project →</a>
+      </div>
+
+
+      <div class="project">
+        <h3>Business Dashboard</h3>
+
+        <p>
+          A dashboard for displaying sales, income, expenses,
+          stock information, and business performance.
+        </p>
+
+        <p><strong>Technologies:</strong> HTML, CSS, JavaScript</p>
+
+        <a href="#">View Project →</a>
+      </div>
+
+    </div>
+  </section>
+
+
+  <!-- Experience -->
+  <section id="experience">
+    <h2 class="section-title">Experience</h2>
+
+    <div class="experience">
+
+      <div class="job">
+        <h3>IT Support </h3>
+        <p><strong>Dummen Orange Naivasha</strong> | 2026</p>
+
+        <p>
+          • Computer troubleshooting and maintenance<br>
+          • Network configuration and support<br>
+          • Software installation and configuration<br>
+          • Technical support for users
+        </p>
+      </div>
+
+
+      <div class="job">
+        <h3>Student / IT Trainee</h3>
+        <p><strong>Bungoma National Polytechnic</strong> | 2024 - 2027</p>
+
+        <p>
+          • Learned programming and database concepts<br>
+          • Developed small software projects<br>
+          • Practiced networking and computer maintenance
+          • Learned Artificial Intelligence and Machine Learning
+        </p>
+      </div>
+
+    </div>
+  </section>
+
+
+  <!-- Contact -->
+  <section id="contact">
+    <h2 class="section-title">Contact Me</h2>
+
+    <div class="contact">
+      <p> Email:
+        <a href="mail to: atim13889@gmail.com">
+          atim13889@gmail.com
+        </a>
+      </p>
+     
+      <div class="contact">
+
+     <p>Outlook:<a href="mail to: newtonalbert123@outlook.com">newtonalbert123@outlook.com
+      </a>
+      </p>
+
+
+      <p> Phone: +254 796503598 / +254 740443204</p>
+
+     
+
+      <a href="mail to:atim13889@gmail.com" class="btn">
+        Contact Me
+      </a>
+    </div>
+  </section>
+
+
+  <!-- Footer -->
+  <footer>
+    <p>© 2026 TMA. All Rights Reserved.</p>
+  </footer>
+
+</body>
+</html>

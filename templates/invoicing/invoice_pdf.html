@@ -1,0 +1,497 @@
+{% extends "documents/base_document.html" %}
+
+{% block doc_type_label %}PROFORMA INVOICE{% endblock %}
+
+{% block doc_tag %}
+    {% if proforma.status %}
+        {{ proforma.status|upper }}
+    {% else %}
+        PROFORMA
+    {% endif %}
+{% endblock %}
+
+{% block document_content %}
+
+<style>
+    /* =========================================================
+       PROFORMA PDF TABLES & COLUMN ALIGNMENT (No Wrap / Fixed Layout)
+       ========================================================= */
+
+    .proforma-wrapper {
+        width: 100%;
+        margin-bottom: 12px;
+    }
+
+    table.sync-table {
+        width: 100% !important;
+        border-collapse: collapse !important;
+        table-layout: fixed !important;
+        margin: 0 0 10px 0 !important;
+    }
+
+    table.sync-table thead {
+        display: table-header-group !important;
+    }
+
+    table.sync-table tbody {
+        display: table-row-group !important;
+    }
+
+    table.sync-table tr {
+        display: table-row !important;
+        page-break-inside: avoid !important;
+    }
+
+    table.sync-table th {
+        display: table-cell !important;
+        background-color: #0f2c59 !important;
+        color: #ffffff !important;
+        padding: 6px 8px !important;
+        font-size: 7.5pt !important;
+        text-transform: uppercase;
+        font-weight: 700;
+        letter-spacing: 0.4px;
+        vertical-align: middle !important;
+        border: 1px solid #1a3c70;
+        white-space: nowrap !important;
+        overflow: hidden;
+    }
+
+    table.sync-table td {
+        display: table-cell !important;
+        color: #2b2d42 !important;
+        padding: 6px 8px !important;
+        font-size: 8.5pt !important;
+        border-bottom: 1px solid #e2e8f0;
+        vertical-align: middle !important;
+        white-space: nowrap !important;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    /* Allow description cells to wrap normally if needed, everything else nowrap */
+    table.sync-table td.desc-cell {
+        white-space: normal !important;
+    }
+
+    table.sync-table tbody tr:nth-child(even) {
+        background-color: #f8f9fa;
+    }
+
+    /* Column Alignment Helpers */
+    .sync-table th.left, .sync-table td.left {
+        text-align: left;
+    }
+
+    .sync-table th.center, .sync-table td.center {
+        text-align: center;
+    }
+
+    .sync-table th.num, .sync-table td.num {
+        text-align: right;
+        white-space: nowrap !important;
+    }
+
+    /* Section Headings */
+    .section-heading {
+        margin-top: 10px;
+        margin-bottom: 4px;
+        color: #0f2c59;
+        font-size: 8.5pt;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        white-space: nowrap;
+    }
+
+    .shipment-value {
+        font-weight: 600;
+        color: #0f2c59;
+    }
+
+    /* =========================================================
+       PROFORMA SUMMARY & TOTALS
+       ========================================================= */
+
+    .proforma-summary {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 8px;
+    }
+
+    .proforma-summary > tbody > tr > td {
+        vertical-align: top;
+    }
+
+    .proforma-details {
+        width: 50%;
+        padding-right: 20px;
+        font-size: 7.5pt;
+        line-height: 1.5;
+        color: #555555;
+    }
+
+    .proforma-totals {
+        width: 50%;
+        vertical-align: top;
+    }
+
+    .proforma-totals-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 8.5pt;
+        table-layout: fixed;
+    }
+
+    .proforma-totals-table td {
+        padding: 4px 6px;
+        vertical-align: middle;
+        border-bottom: none;
+        white-space: nowrap !important;
+    }
+
+    .total-label {
+        text-align: right;
+        color: #555555;
+        font-weight: 600;
+        padding-right: 10px;
+        white-space: nowrap !important;
+    }
+
+    .total-value {
+        text-align: right;
+        font-weight: 600;
+        white-space: nowrap !important;
+        color: #0f2c59;
+    }
+
+    .grand-total-row td {
+        border-top: 1px solid #cbd5e1;
+        border-bottom: 2px solid #0f2c59;
+        padding-top: 6px !important;
+        padding-bottom: 6px !important;
+        font-size: 9pt;
+        font-weight: 700;
+        background-color: #f8f9fa;
+        color: #0f2c59;
+        white-space: nowrap !important;
+    }
+
+    .paid-row td {
+        color: #008751;
+        font-weight: 600;
+        white-space: nowrap !important;
+    }
+
+    .balance-row td {
+        border-top: 2px solid #d90429;
+        border-bottom: 2px solid #d90429;
+        padding-top: 6px !important;
+        padding-bottom: 6px !important;
+        font-size: 9pt;
+        font-weight: 700;
+        color: #d90429;
+        background-color: #f8f9fa;
+        white-space: nowrap !important;
+    }
+
+    .proforma-notes {
+        margin-top: 10px;
+        padding: 8px 10px;
+        background-color: #f8f9fa;
+        border-left: 3px solid #0f2c59;
+        font-size: 7.5pt;
+        line-height: 1.4;
+        color: #555555;
+        page-break-inside: avoid;
+    }
+</style>
+
+
+<div class="proforma-wrapper">
+
+    <!-- =========================================================
+         TABLE 1: SHIPMENT DETAILS
+         ========================================================= -->
+
+    <div class="section-heading">Shipment Details</div>
+
+    <table class="sync-table shipment-table">
+        <colgroup>
+            <col style="width: 18%;">
+            <col style="width: 14%;">
+            <col style="width: 14%;">
+            <col style="width: 18%;">
+            <col style="width: 21%;">
+            <col style="width: 15%;">
+        </colgroup>
+        <thead>
+            <tr>
+                <th class="left">Commodity</th>
+                <th class="left">POL</th>
+                <th class="left">POD</th>
+                <th class="left">Vessel</th>
+                <th class="left">BL Number</th>
+                <th class="center">Due Date</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            <tr>
+                <td class="left shipment-value">
+                    {{ proforma.commodity|default:invoice.commodity|default:"—" }}
+                </td>
+                <td class="left">{{ proforma.origin_port|default:invoice.origin_port|default:"—" }}</td>
+                <td class="left">{{ proforma.destination_port|default:invoice.destination_port|default:"—" }}</td>
+                <td class="left">{{ proforma.vessel|default:invoice.vessel|default:"—" }}</td>
+                <td class="left">{{ proforma.bl_number|default:invoice.bl_number|default:"—" }}</td>
+                <td class="center">
+                    {% if proforma.due_date %}
+                        {{ proforma.due_date|date:"d/m/Y" }}
+                    {% elif invoice.due_date %}
+                        {{ invoice.due_date|date:"d/m/Y" }}
+                    {% else %}
+                        —
+                    {% endif %}
+                </td>
+            </tr>
+        </tbody>
+    </table>
+
+
+    <!-- =========================================================
+         TABLE 2: LINE ITEMS
+         ========================================================= -->
+
+    <div class="section-heading">Proforma Breakdown</div>
+
+    <table class="sync-table">
+
+        <colgroup>
+            <col style="width: 36%;">
+            <col style="width: 14%;">
+            <col style="width: 16%;">
+            <col style="width: 16%;">
+            <col style="width: 18%;">
+        </colgroup>
+
+        <thead>
+            <tr>
+                <th class="left">Description</th>
+                <th class="num">Quantity</th>
+                <th class="num">Unit Price</th>
+                <th class="num">VAT ({{ currency_symbol|default:"$" }})</th>
+                <th class="num">Total Amount ({{ currency_symbol|default:"$" }})</th>
+            </tr>
+        </thead>
+
+        <tbody>
+
+            {% for line in items %}
+
+            <tr>
+
+                <td class="left desc-cell" style="white-space: normal !important;">
+                    {% if line.item_id and line.item.code %}
+                        <span style="color: #718096; font-size: 7.5pt; margin-right: 4px; white-space: nowrap;">[{{ line.item.code }}]</span>
+                    {% endif %}
+
+                    <strong style="color: #2b2d42;">{{ line.description }}</strong>
+
+                    {% if line.details %}
+                        <br>
+                        <small style="color: #718096; line-height: 1.3;">
+                            {{ line.details }}
+                        </small>
+                    {% endif %}
+                </td>
+
+                <td class="num">
+                    {{ line.quantity|default:0|floatformat:2 }}
+                </td>
+
+                <td class="num">
+                    {{ currency_symbol|default:"$" }} {{ line.unit_price|default:0|floatformat:2 }}
+                </td>
+
+                <td class="num">
+                    {{ currency_symbol|default:"$" }} {{ line.vat_amount|default:0|floatformat:2 }}
+                </td>
+
+                <td class="num">
+                    <strong>{{ currency_symbol|default:"$" }} {{ line.total_amount|default:0|floatformat:2 }}</strong>
+                </td>
+
+            </tr>
+
+            {% empty %}
+
+            <tr>
+                <td colspan="5"
+                    class="center"
+                    style="padding: 16px; color: #A0AEC0; white-space: normal !important;">
+                    No line items found.
+                </td>
+            </tr>
+
+            {% endfor %}
+
+        </tbody>
+
+    </table>
+
+</div>
+
+
+<!-- =========================================================
+     PROFORMA DETAILS + TOTALS
+     ========================================================= -->
+
+<table class="proforma-summary">
+
+    <tr>
+
+        <!-- =====================================================
+             LEFT: PROFORMA DETAILS
+             ===================================================== -->
+
+        <td class="proforma-details" style="white-space: normal !important;">
+
+            {% if proforma.payment_terms %}
+                <strong style="color: #0f2c59;">Payment Terms:</strong>
+                <div style="margin-top: 2px; color: #2b2d42; white-space: normal !important;">{{ proforma.payment_terms }}</div>
+                <br>
+            {% endif %}
+
+            {% if proforma.valid_until %}
+                <strong style="color: #0f2c59;">Valid Until:</strong>
+                <span style="color: #2b2d42;">{{ proforma.valid_until|date:"d/m/Y" }}</span>
+                <br>
+            {% endif %}
+
+            {% if reference_number %}
+                <strong style="color: #0f2c59;">Reference:</strong>
+                <span style="color: #2b2d42;">{{ reference_number }}</span>
+            {% endif %}
+
+        </td>
+
+
+        <!-- =====================================================
+             RIGHT: TOTALS
+             ===================================================== -->
+
+        <td class="proforma-totals">
+
+            <table class="proforma-totals-table">
+                <colgroup>
+                    <col style="width: 55%;">
+                    <col style="width: 45%;">
+                </colgroup>
+
+                <!-- SUBTOTAL -->
+                <tr>
+                    <td class="total-label">
+                        Subtotal Amount:
+                    </td>
+
+                    <td class="total-value">
+                        {{ currency_symbol|default:"$" }} {{ subtotal|default:0|floatformat:2 }}
+                    </td>
+                </tr>
+
+
+                <!-- VAT -->
+                <tr>
+                    <td class="total-label">
+                        VAT Total:
+                    </td>
+
+                    <td class="total-value">
+                        {{ currency_symbol|default:"$" }} {{ vat_total|default:0|floatformat:2 }}
+                    </td>
+                </tr>
+
+
+                <!-- GRAND TOTAL -->
+                <tr class="grand-total-row">
+
+                    <td class="total-label">
+                        Grand Total ({{ currency_code|default:"USD" }}):
+                    </td>
+
+                    <td class="total-value">
+                        {{ currency_symbol|default:"$" }} {{ grand_total|default:0|floatformat:2 }}
+                    </td>
+
+                </tr>
+
+
+                <!-- PAID -->
+                {% if proforma.paid_amount %}
+
+                <tr class="paid-row">
+
+                    <td class="total-label">
+                        Paid to Date:
+                    </td>
+
+                    <td class="total-value" style="color: #008751;">
+                        {{ currency_symbol|default:"$" }} {{ proforma.paid_amount|default:0|floatformat:2 }}
+                    </td>
+
+                </tr>
+
+
+                <!-- BALANCE -->
+                <tr class="balance-row">
+
+                    <td class="total-label" style="color: #d90429;">
+                        Balance Due ({{ currency_code|default:"USD" }}):
+                    </td>
+
+                    <td class="total-value" style="color: #d90429;">
+                        {{ currency_symbol|default:"$" }} {{ proforma.balance_due|default:0|floatformat:2 }}
+                    </td>
+
+                </tr>
+
+                {% endif %}
+
+            </table>
+
+        </td>
+
+    </tr>
+
+</table>
+
+
+<!-- =========================================================
+     NOTES
+     ========================================================= -->
+
+{% if proforma.notes %}
+
+<div class="proforma-notes" style="white-space: normal !important;">
+    <div style="font-weight: 700; text-transform: uppercase; margin-bottom: 3px; color: #0f2c59; letter-spacing: 0.3px;">Notes</div>
+    {{ proforma.notes|linebreaksbr }}
+</div>
+
+{% endif %}
+
+
+<!-- =========================================================
+     TERMS & CONDITIONS
+     ========================================================= -->
+
+{% if proforma.terms %}
+
+<div class="proforma-notes" style="white-space: normal !important;">
+    <div style="font-weight: 700; text-transform: uppercase; margin-bottom: 3px; color: #0f2c59; letter-spacing: 0.3px;">Terms &amp; Conditions</div>
+    {{ proforma.terms|linebreaksbr }}
+</div>
+
+{% endif %}
+
+{% endblock %}

@@ -1,0 +1,319 @@
+{% extends "documents/base_document.html" %}
+
+{% block doc_type_label %}QUOTATION{% endblock %}
+{% block document_number_label %}Quote No:{% endblock %}
+{% block customer_heading %}Customer Details{% endblock %}
+
+{% block document_content %}
+
+<style>
+    @page {
+        size: A4;
+        margin: 6mm 6mm 14mm 6mm;
+        
+        @bottom-left {
+            content: "Customer Signature & Stamp: _____________________________";
+            font-size: 7.5pt;
+            color: #555555;
+            font-family: inherit;
+        }
+        
+        @bottom-right {
+            content: "Authorized Signatory: _____________________________";
+            font-size: 7.5pt;
+            color: #555555;
+            font-family: inherit;
+        }
+    }
+
+    .quote-section {
+        margin-top: 8px;
+        margin-bottom: 3px;
+        color: #0f2c59;
+        font-size: 8.5pt;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .doc-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 8px;
+        font-size: 8pt;
+    }
+
+    .doc-table thead {
+        display: table-header-group;
+    }
+
+    .doc-table th {
+        background-color: #0f2c59;
+        color: #ffffff;
+        font-weight: 600;
+        font-size: 7.5pt;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+        padding: 6px 8px;
+        border: 1px solid #1a3c70;
+        vertical-align: middle;
+    }
+
+    /* Column Alignment Helpers */
+    .doc-table th.num, .doc-table td.num {
+        text-align: right;
+        white-space: nowrap;
+    }
+
+    .doc-table th.center, .doc-table td.center {
+        text-align: center;
+    }
+
+    .doc-table th.left, .doc-table td.left {
+        text-align: left;
+    }
+
+    .doc-table td {
+        padding: 6px 8px;
+        color: #2b2d42;
+        border: 1px solid #cbd5e1; /* Visible grid lines for item table clarity */
+        vertical-align: middle;
+    }
+
+    .doc-table tbody tr:nth-child(even) {
+        background-color: #f8f9fa;
+    }
+
+    .doc-table tbody tr {
+        page-break-inside: avoid;
+    }
+
+    .shipment-table td {
+        padding-top: 5px;
+        padding-bottom: 5px;
+    }
+
+    .item-code {
+        color: #718096;
+        font-size: 7.5pt;
+    }
+
+    .item-description {
+        color: #2b2d42;
+        font-weight: 600;
+    }
+
+    .payment-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 4px;
+        font-size: 8pt;
+    }
+
+    .payment-table td {
+        padding: 3px 4px;
+        vertical-align: top;
+    }
+
+    .payment-label {
+        font-weight: 600;
+        color: #555555;
+    }
+
+    .totals-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 8pt;
+    }
+
+    .totals-table td {
+        padding: 4px 6px;
+        color: #555555;
+        border: none;
+    }
+
+    .totals-table .total-label {
+        text-align: right;
+        font-weight: 600;
+    }
+
+    .totals-table .total-value {
+        text-align: right;
+        white-space: nowrap;
+        color: #0f2c59;
+        font-weight: 600;
+    }
+
+    .totals-table .grand-total td {
+        border-top: 1px solid #cbd5e1;
+        border-bottom: 2px solid #0f2c59;
+        padding-top: 6px;
+        padding-bottom: 6px;
+        color: #0f2c59;
+        font-size: 9pt;
+        font-weight: 700;
+        background-color: #f8f9fa;
+    }
+
+    .terms-box {
+        margin-top: 8px;
+        padding: 6px 8px;
+        background-color: #f8f9fa;
+        border-left: 3px solid #0f2c59;
+        page-break-inside: avoid;
+    }
+
+    .terms-title {
+        color: #0f2c59;
+        font-size: 7.5pt;
+        font-weight: 700;
+        text-transform: uppercase;
+        margin-bottom: 2px;
+        letter-spacing: 0.3px;
+    }
+
+    .terms-content {
+        color: #555555;
+        font-size: 7.5pt;
+        line-height: 1.35;
+    }
+</style>
+
+<!-- SHIPMENT DETAILS -->
+<div class="quote-section">Shipment Details</div>
+
+<table class="doc-table shipment-table">
+    <thead>
+        <tr>
+            <th class="left" style="width: 24%;">Commodity</th>
+            <th class="left" style="width: 25%;">POL</th>
+            <th class="left" style="width: 25%;">POD</th>
+            <th class="center" style="width: 11%;">Qty</th>
+            <th class="left" style="width: 15%;">FPOD</th>
+        </tr>
+    </thead>
+
+    <tbody>
+        <tr>
+            <td class="left">
+                {{ quotation.commodity|default:"—" }}
+            </td>
+            <td class="left">
+                {{ quotation.origin_port|default:"—" }}
+            </td>
+            <td class="left">
+                {{ quotation.destination_port|default:"—" }}
+            </td>
+            <td class="center">
+                {{ quotation.commodity_quantity|default:"—" }}
+                {% if quotation.commodity_unit %}
+                    {{ quotation.commodity_unit }}
+                {% endif %}
+            </td>
+            <td class="left">
+                {{ quotation.final_destination|default:"—" }}
+            </td>
+        </tr>
+    </tbody>
+</table>
+
+<!-- QUOTATION BREAKDOWN (TABLE 2) -->
+<div class="quote-section">Quotation Breakdown</div>
+
+<table class="doc-table pricing-table">
+    <thead>
+        <tr>
+            <th class="left" style="width: 10%;">Code</th>
+            <th class="left" style="width: 42%;">Description</th>
+            <th class="num" style="width: 13%;">Quantity</th>
+            <th class="num" style="width: 17%;">Unit Price ({{ currency_code }})</th>
+            <th class="num" style="width: 13%;">VAT ({{ currency_code }})</th>
+            <th class="num" style="width: 15%;">Total</th>
+        </tr>
+    </thead>
+
+    <tbody>
+        {% for line in items %}
+        <tr>
+            <td class="left">
+                {% if line.item.code %}
+                    <span class="item-code">[{{ line.item.code }}]</span>
+                {% endif %}
+            </td>
+            <td class="left">
+                <span class="item-description">{{ line.description }}</span>
+            </td>
+
+            <td class="num">
+                {{ line.quantity|floatformat:2 }}
+            </td>
+
+            <td class="num">
+                {{ currency_symbol }} {{ line.unit_price|floatformat:2 }}
+            </td>
+
+            <td class="num">
+                {{ currency_symbol }} {{ line.vat_amount|floatformat:2 }}
+            </td>
+
+            <td class="num">
+                <strong>{{ currency_symbol }} {{ line.total_amount|floatformat:2 }}</strong>
+            </td>
+        </tr>
+
+        {% empty %}
+        <tr>
+            <td colspan="5" class="center" style="padding: 12px; color: #A0AEC0;">
+                No quotation line items available.
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<!-- PAYMENT TERMS AND TOTALS -->
+<table class="payment-table">
+    <tr>
+        <td style="width: 48%; vertical-align: top;">
+            <span class="payment-label">Payment Terms:</span>
+            <div style="margin-top: 2px; color: #2b2d42;">{{ quotation.payment_terms|default:"As agreed" }}</div>
+        </td>
+
+        <td style="width: 52%; vertical-align: top; padding: 0;">
+            <table class="totals-table">
+                <tr>
+                    <td class="total-label" style="width: 65%;">Subtotal Amount:</td>
+                    <td class="total-value" style="width: 35%;">
+                        {{ currency_symbol }} {{ subtotal_amount|default:subtotal|floatformat:2 }}
+                    </td>
+                </tr>
+
+                <tr>
+                    <td class="total-label">VAT Total:</td>
+                    <td class="total-value">
+                        {{ currency_symbol }} {{ vat_total|floatformat:2 }}
+                    </td>
+                </tr>
+
+                <tr class="grand-total">
+                    <td class="total-label">Grand Total ({{ currency_code }}):</td>
+                    <td class="total-value">
+                        {{ currency_symbol }} {{ grand_total|floatformat:2 }}
+                    </td>
+                </tr>
+            </table>
+        </td>
+    </tr>
+</table>
+
+<!-- ADDITIONAL TERMS -->
+{% if quotation.terms or quotation.notes %}
+<div class="terms-box">
+    <div class="terms-title">Terms and Conditions</div>
+    <div class="terms-content">
+        {{ quotation.terms|default:quotation.notes|linebreaksbr }}
+    </div>
+</div>
+{% endif %}
+
+{% endblock %}
