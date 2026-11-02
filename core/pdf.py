@@ -1,7 +1,84 @@
 
 """
 Shared PDF-rendering helper used by all Django PDF views.
+"""
+Shared PDF-rendering helper used by all Django PDF views.
 
+Uses Playwright with Chromium to render HTML/CSS into PDF documents.
+"""
+
+from playwright.sync_api import sync_playwright
+
+
+def render_pdf(html_string: str) -> bytes:
+    if not html_string or not html_string.strip():
+        raise ValueError("Cannot generate a PDF from empty HTML.")
+
+    try:
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(
+                headless=True,
+                args=[
+                    "--no-sandbox",
+                    "--disable-dev-shm-usage",
+                    "--disable-gpu",
+                ],
+            )
+
+            try:
+                page = browser.new_page(
+                    viewport={"width": 1280, "height": 1600},
+                    device_scale_factor=1,
+                )
+
+                page.set_content(
+                    html_string,
+                    wait_until="load",
+                    timeout=60000,
+                )
+
+                page.evaluate("""
+                    async () => {
+                        await document.fonts.ready;
+
+                        await Promise.all(
+                            Array.from(document.images).map(img => {
+                                if (img.complete) return Promise.resolve();
+
+                                return new Promise(resolve => {
+                                    img.addEventListener("load", resolve, {once: true});
+                                    img.addEventListener("error", resolve, {once: true});
+                                });
+                            })
+                        );
+                    }
+                """)
+
+                pdf_bytes = page.pdf(
+                    format="A4",
+                    print_background=True,
+                    prefer_css_page_size=True,
+                    display_header_footer=False,
+                    margin={
+                        "top": "12mm",
+                        "right": "14mm",
+                        "bottom": "15mm",
+                        "left": "14mm",
+                    },
+                )
+
+                if not pdf_bytes or not pdf_bytes.startswith(b"%PDF"):
+                    raise RuntimeError("Chromium did not return a valid PDF.")
+
+                return pdf_bytes
+
+            finally:
+                browser.close()
+
+    except Exception as exc:
+        raise RuntimeError(
+            f"PDF generation failed using Playwright: {exc}"
+        ) from exc
 Uses Playwright with Chromium to render HTML/CSS into PDF documents.
 
 Advantages:
