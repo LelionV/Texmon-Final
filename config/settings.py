@@ -30,7 +30,9 @@ SECRET_KEY = os.environ.get(
 DEBUG = os.environ.get("DJANGO_DEBUG", "True") == "True"
 
 ALLOWED_HOSTS = ['test.autonovasystem.com', '*']
-
+CSRF_TRUSTED_ORIGINS = [
+    "https://test.autonovasystem.com",
+]
 
 # Application definition
 
