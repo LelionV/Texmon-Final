@@ -1,179 +1,107 @@
 
 """
-Shared PDF-rendering helper used by all Django PDF views.
-"""
-Shared PDF-rendering helper used by all Django PDF views.
+Shared PDF rendering helper for Django PDF views.
 
-Uses Playwright with Chromium to render HTML/CSS into PDF documents.
+Uses Playwright and Chromium to generate A4 PDF documents.
+Suitable for quotations, invoices, proformas and receipts.
 """
 
 from playwright.sync_api import sync_playwright
 
 
 def render_pdf(html_string: str) -> bytes:
+    """
+    Convert rendered HTML into PDF bytes using Chromium.
+    """
+
     if not html_string or not html_string.strip():
-        raise ValueError("Cannot generate a PDF from empty HTML.")
+        raise ValueError("Cannot generate PDF from empty HTML.")
+
+    browser = None
 
     try:
         with sync_playwright() as playwright:
+
             browser = playwright.chromium.launch(
                 headless=True,
                 args=[
                     "--no-sandbox",
+                    "--disable-setuid-sandbox",
                     "--disable-dev-shm-usage",
-                    "--disable-gpu",
                 ],
             )
 
-            try:
-                page = browser.new_page(
-                    viewport={"width": 1280, "height": 1600},
-                    device_scale_factor=1,
-                )
+            page = browser.new_page(
+                viewport={
+                    "width": 1280,
+                    "height": 1600,
+                },
+                device_scale_factor=1,
+            )
 
-                page.set_content(
-                    html_string,
-                    wait_until="load",
-                    timeout=60000,
-                )
+            # IMPORTANT:
+            # Do not pass base_url. Playwright does not support it.
+            page.set_content(
+                html_string,
+                wait_until="load",
+                timeout=60000,
+            )
 
-                page.evaluate("""
-                    async () => {
-                        await document.fonts.ready;
+            # Wait for fonts and images.
+            page.evaluate(
+                """async () => {
+                    await document.fonts.ready;
 
-                        await Promise.all(
-                            Array.from(document.images).map(img => {
-                                if (img.complete) return Promise.resolve();
+                    await Promise.all(
+                        Array.from(document.images).map(img => {
+                            if (img.complete) {
+                                return Promise.resolve();
+                            }
 
-                                return new Promise(resolve => {
-                                    img.addEventListener("load", resolve, {once: true});
-                                    img.addEventListener("error", resolve, {once: true});
+                            return new Promise(resolve => {
+                                img.addEventListener("load", resolve, {
+                                    once: true
                                 });
-                            })
-                        );
-                    }
-                """)
 
-                pdf_bytes = page.pdf(
-                    format="A4",
-                    print_background=True,
-                    prefer_css_page_size=True,
-                    display_header_footer=False,
-                    margin={
-                        "top": "12mm",
-                        "right": "14mm",
-                        "bottom": "15mm",
-                        "left": "14mm",
-                    },
+                                img.addEventListener("error", resolve, {
+                                    once: true
+                                });
+                            });
+                        })
+                    );
+                }"""
+            )
+
+            page.emulate_media(media="print")
+
+            pdf_bytes = page.pdf(
+                format="A4",
+                print_background=True,
+                prefer_css_page_size=True,
+                display_header_footer=False,
+                margin={
+                    "top": "12mm",
+                    "right": "14mm",
+                    "bottom": "15mm",
+                    "left": "14mm",
+                },
+            )
+
+            if not pdf_bytes or not pdf_bytes.startswith(b"%PDF"):
+                raise RuntimeError(
+                    "Chromium did not generate a valid PDF."
                 )
 
-                if not pdf_bytes or not pdf_bytes.startswith(b"%PDF"):
-                    raise RuntimeError("Chromium did not return a valid PDF.")
-
-                return pdf_bytes
-
-            finally:
-                browser.close()
+            return pdf_bytes
 
     except Exception as exc:
         raise RuntimeError(
-            f"PDF generation failed using Playwright: {exc}"
+            f"Playwright PDF generation failed: {exc}"
         ) from exc
-Uses Playwright with Chromium to render HTML/CSS into PDF documents.
 
-Advantages:
-- Supports modern HTML and CSS.
-- Handles table layouts, page breaks, borders, and typography.
-- Supports embedded Base64 images, including company logos.
-- Does not depend on GTK, Pango, or Cairo.
-- Suitable for quotations, invoices, proformas, and receipts.
-"""
-
-from playwright.sync_api import sync_playwright
-
-
-def render_pdf(html_string: str) -> bytes:
-    """
-    Render an HTML string to A4 PDF bytes using Playwright and Chromium.
-
-    Args:
-        html_string: Fully rendered HTML document.
-
-    Returns:
-        PDF document as bytes.
-
-    Raises:
-        RuntimeError: If PDF generation fails.
-    """
-    if not html_string or not html_string.strip():
-        raise ValueError("Cannot generate a PDF from empty HTML.")
-
-    try:
-        with sync_playwright() as playwright:
-            browser = playwright.chromium.launch()
-
+    finally:
+        if browser is not None:
             try:
-                page = browser.new_page(
-                    viewport={"width": 1280, "height": 1600},
-                    device_scale_factor=1,
-                )
-
-                page.set_content(
-                    html_string,
-                    wait_until="networkidle",
-                    timeout=30000,
-                )
-
-                # Wait for images, including Base64-embedded logos.
-                page.evaluate(
-                    """async () => {
-                        await document.fonts.ready;
-
-                        const images = Array.from(document.images);
-
-                        await Promise.all(
-                            images.map((img) => {
-                                if (img.complete) {
-                                    return Promise.resolve();
-                                }
-
-                                return new Promise((resolve) => {
-                                    img.addEventListener("load", resolve, {
-                                        once: true
-                                    });
-                                    img.addEventListener("error", resolve, {
-                                        once: true
-                                    });
-                                });
-                            })
-                        );
-                    }"""
-                )
-
-                pdf_bytes = page.pdf(
-                    format="A4",
-                    print_background=True,
-                    prefer_css_page_size=True,
-                    display_header_footer=False,
-                    margin={
-                        "top": "12mm",
-                        "right": "14mm",
-                        "bottom": "15mm",
-                        "left": "14mm",
-                    },
-                )
-
-                if not pdf_bytes or not pdf_bytes.startswith(b"%PDF"):
-                    raise RuntimeError(
-                        "Chromium did not return a valid PDF document."
-                    )
-
-                return pdf_bytes
-
-            finally:
                 browser.close()
-
-    except Exception as exc:
-        raise RuntimeError(
-            f"PDF generation failed using Playwright: {exc}"
-        ) from exc
+            except Exception:
+                pass
