@@ -1,59 +1,223 @@
 {% extends "documents/base_document.html" %}
+
+{% block doc_title %}Statement of Account{% endblock %}
+
 {% block doc_type_label %}STATEMENT OF ACCOUNT{% endblock %}
+
+{% block document_number_label %}Statement No:{% endblock %}
+
+{% block customer_heading %}Statement For{% endblock %}
+
 {% block attention_box %}
 <table class="attention-box-table">
     <tr><td>
         <div class="label">Statement For</div>
-        <div class="name">{{ statement.client.company_name }}</div>
-        <div>{{ statement.client.billing_address|default:statement.client.address }}</div>
-        <div style="margin-top:6px;">Period: {{ statement.date_from|date:"d/m/Y" }} to {{ statement.date_to|date:"d/m/Y" }}</div>
+        <div class="name">{{ statement.client.company_name|default:statement.client.name|default:"—" }}</div>
+        <div>{{ statement.client.billing_address|default:statement.client.address|default:"—" }}</div>
+        <div style="margin-top: 6px;">Period: {{ statement.date_from|date:"d/m/Y" }} to {{ statement.date_to|date:"d/m/Y" }}</div>
     </td></tr>
 </table>
 {% endblock %}
+
+{% block document_styles %}
+
+/* =========================================================
+    STATEMENT OF ACCOUNT STYLES (Matched to System Theme)
+    ========================================================= */
+
+.statement-section-heading {
+    margin-top: 10px;
+    margin-bottom: 4px;
+    color: #0f2c59;
+    font-size: 8.5pt;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+    page-break-after: avoid;
+}
+
+.doc-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 9px;
+    font-size: 8pt;
+    table-layout: fixed;
+}
+
+.doc-table thead {
+    display: table-header-group;
+}
+
+.doc-table th {
+    background-color: #0f2c59;
+    color: #ffffff;
+    font-weight: 700;
+    font-size: 7.5pt;
+    text-transform: uppercase;
+    padding: 6px 8px;
+    border: 1px solid #1a3c70;
+    vertical-align: middle;
+}
+
+.doc-table td {
+    padding: 6px 8px;
+    color: #2b2d42;
+    border: 1px solid #cbd5e1;
+    vertical-align: middle;
+    overflow-wrap: break-word;
+}
+
+.doc-table tbody tr:nth-child(even) {
+    background-color: #f8f9fa;
+}
+
+.doc-table tbody tr {
+    page-break-inside: avoid;
+    break-inside: avoid;
+}
+
+.doc-table th.num,
+.doc-table td.num {
+    text-align: right;
+    white-space: nowrap;
+}
+
+.doc-table th.left,
+.doc-table td.left {
+    text-align: left;
+}
+
+.doc-table th.center,
+.doc-table td.center {
+    text-align: center;
+}
+
+.statement-summary-row td {
+    background-color: #f8f9fa;
+    font-weight: 700;
+    color: #0f2c59;
+    border-top: 1px solid #cbd5e1;
+    border-bottom: 2px solid #0f2c59;
+}
+
+@media print {
+    .statement-section-heading {
+        page-break-after: avoid;
+    }
+    .doc-table tr {
+        page-break-inside: avoid;
+    }
+}
+
+{% endblock %}
+
+
 {% block document_content %}
+
+<!-- =========================================================
+     AGING SUMMARY TABLE
+     ========================================================= -->
+
+<div class="statement-section-heading">Aging Summary</div>
+
 <table class="doc-table">
-    <thead><tr>
-        <th class="num">Current</th>
-        <th class="num">1-30 Days</th>
-        <th class="num">31-60 Days</th>
-        <th class="num">61-90 Days</th>
-        <th class="num">Over 90 Days</th>
-        <th class="num">Amount Due</th>
-    </tr></thead>
+    <colgroup>
+        <col style="width: 16%;">
+        <col style="width: 16%;">
+        <col style="width: 16%;">
+        <col style="width: 16%;">
+        <col style="width: 16%;">
+        <col style="width: 20%;">
+    </colgroup>
+    <thead>
+        <tr>
+            <th class="num">Current</th>
+            <th class="num">1-30 Days</th>
+            <th class="num">31-60 Days</th>
+            <th class="num">61-90 Days</th>
+            <th class="num">Over 90 Days</th>
+            <th class="num">Amount Due ({{ currency_symbol|default:"$" }})</th>
+        </tr>
+    </thead>
     <tbody>
         <tr>
-            <td class="num">{{ aging.current|floatformat:2 }}</td>
-            <td class="num">{{ aging.days_1_30|floatformat:2 }}</td>
-            <td class="num">{{ aging.days_31_60|floatformat:2 }}</td>
-            <td class="num">{{ aging.days_61_90|floatformat:2 }}</td>
-            <td class="num">{{ aging.over_90|floatformat:2 }}</td>
-            <td class="num"><strong>{{ aging.amount_due|floatformat:2 }}</strong></td>
+            <td class="num">{{ currency_symbol|default:"$" }} {{ aging.current|default:0|floatformat:2 }}</td>
+            <td class="num">{{ currency_symbol|default:"$" }} {{ aging.days_1_30|default:0|floatformat:2 }}</td>
+            <td class="num">{{ currency_symbol|default:"$" }} {{ aging.days_31_60|default:0|floatformat:2 }}</td>
+            <td class="num">{{ currency_symbol|default:"$" }} {{ aging.days_61_90|default:0|floatformat:2 }}</td>
+            <td class="num">{{ currency_symbol|default:"$" }} {{ aging.over_90|default:0|floatformat:2 }}</td>
+            <td class="num" style="color: #0f2c59;"><strong>{{ currency_symbol|default:"$" }} {{ aging.amount_due|default:0|floatformat:2 }}</strong></td>
         </tr>
     </tbody>
 </table>
 
+
+<!-- =========================================================
+     ACCOUNT TRANSACTIONS TABLE
+     ========================================================= -->
+
+<div class="statement-section-heading">Account Transactions</div>
+
 <table class="doc-table">
-    <thead><tr>
-        <th>Date</th>
-        <th>Type</th>
-        <th>Reference</th>
-        <th class="num">Amount</th>
-        <th class="num">Balance</th>
-    </tr></thead>
+    <colgroup>
+        <col style="width: 14%;">
+        <col style="width: 26%;">
+        <col style="width: 20%;">
+        <col style="width: 20%;">
+        <col style="width: 20%;">
+    </colgroup>
+    <thead>
+        <tr>
+            <th class="left">Date</th>
+            <th class="left">Type</th>
+            <th class="left">Reference</th>
+            <th class="num">Amount ({{ currency_symbol|default:"$" }})</th>
+            <th class="num">Balance ({{ currency_symbol|default:"$" }})</th>
+        </tr>
+    </thead>
     <tbody>
-        <tr><td><strong>Opening Balance</strong></td><td>&nbsp;</td><td>&nbsp;</td><td class="num">&nbsp;</td><td class="num"><strong>{{ statement.opening_balance|floatformat:2 }}</strong></td></tr>
+        <tr>
+            <td class="left"><strong>Opening Balance</strong></td>
+            <td class="left">—</td>
+            <td class="left">—</td>
+            <td class="num">—</td>
+            <td class="num"><strong>{{ currency_symbol|default:"$" }} {{ statement.opening_balance|default:0|floatformat:2 }}</strong></td>
+        </tr>
+
         {% for line in lines %}
         <tr>
-            <td>{{ line.date|date:"d/m/Y" }}</td>
-            <td>{{ line.get_entry_type_display }}</td>
-            <td>{{ line.reference_number|default:"—" }}</td>
-            <td class="num">{% if line.debit %}{{ line.debit|floatformat:2 }} Dr{% elif line.credit %}{{ line.credit|floatformat:2 }} Cr{% else %}&nbsp;{% endif %}</td>
-            <td class="num">{{ line.running_balance|floatformat:2 }}</td>
+            <td class="left">{{ line.date|date:"d/m/Y" }}</td>
+            <td class="left">{{ line.get_entry_type_display|default:line.entry_type|default:"—" }}</td>
+            <td class="left">{{ line.reference_number|default:"—" }}</td>
+            <td class="num">
+                {% if line.debit %}
+                    {{ currency_symbol|default:"$" }} {{ line.debit|floatformat:2 }} Dr
+                {% elif line.credit %}
+                    {{ currency_symbol|default:"$" }} {{ line.credit|floatformat:2 }} Cr
+                {% else %}
+                    —
+                {% endif %}
+            </td>
+            <td class="num">{{ currency_symbol|default:"$" }} {{ line.running_balance|default:0|floatformat:2 }}</td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="5" class="center" style="padding: 12px; color: #718096;">
+                No transaction records available for this period.
+            </td>
         </tr>
         {% endfor %}
-        <tr><td><strong>Closing Balance</strong></td><td>&nbsp;</td><td>&nbsp;</td><td class="num">&nbsp;</td><td class="num"><strong>{{ statement.closing_balance|floatformat:2 }}</strong></td></tr>
+
+        <tr class="statement-summary-row">
+            <td colspan="4" class="left" style="text-align: right; padding-right: 12px;">Closing Balance:</td>
+            <td class="num" style="color: #0f2c59;"><strong>{{ currency_symbol|default:"$" }} {{ statement.closing_balance|default:0|floatformat:2 }}</strong></td>
+        </tr>
     </tbody>
 </table>
+
 {% endblock %}
+
 {% block totals_block %}{% endblock %}
+
 {% block signatures_block %}{% endblock %}
