@@ -426,44 +426,41 @@
 
             <td style="width: 52%; padding: 0;">
 
-                <table class="totals-table">
+               
+<table class="totals-table">
+    <tbody>
+        <tr>
+            <td class="total-label" style="width: 65%;">
+                Subtotal Amount:
+            </td>
+            <td class="total-value" style="width: 35%;">
+                {{ currency_symbol|default:"$" }}
+                {{ subtotal|default:0|floatformat:2 }}
+            </td>
+        </tr>
 
-                    <tbody>
+        <tr>
+            <td class="total-label">
+                VAT Total:
+            </td>
+            <td class="total-value">
+                {{ currency_symbol|default:"$" }}
+                {{ vat_total|default:0|floatformat:2 }}
+            </td>
+        </tr>
 
-                        <tr>
-                            <td class="total-label" style="width: 65%;">
-                                Subtotal Amount:
-                            </td>
+        <tr class="grand-total">
+            <td class="total-label">
+                Grand Total ({{ currency_code|default:"USD" }}):
+            </td>
+            <td class="total-value">
+                {{ currency_symbol|default:"$" }}
+                {{ grand_total|default:0|floatformat:2 }}
+            </td>
+        </tr>
+    </tbody>
+</table>
 
-                            <td class="total-value" style="width: 35%;">
-                                {{ currency_symbol|default:"$" }}
-                                {{ subtotal|default:subtotal_amount|default:0|floatformat:2 }}
-                            </td>
-                        </tr>
-
-                        <tr>
-                            <td class="total-label">
-                                VAT Total:
-                            </td>
-
-                            <td class="total-value">
-                                {{ currency_symbol|default:"$" }}
-                                {{ vat_total|default:0|floatformat:2 }}
-                            </td>
-                        </tr>
-
-                        <tr class="grand-total">
-
-                            <td class="total-label">
-                                Grand Total ({{ currency_code|default:"USD" }}):
-                            </td>
-
-                            <td class="total-value">
-                                {{ currency_symbol|default:"$" }}
-                                {{ grand_total|default:0|floatformat:2 }}
-                            </td>
-
-                        </tr>
 
                         {% if proforma.paid_amount and proforma.paid_amount > 0 %}
 
