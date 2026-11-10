@@ -400,50 +400,43 @@ table.sync-table tbody tr:nth-child(even) {
 
         <td class="invoice-totals">
 
-            <table class="invoice-totals-table">
-                <colgroup>
-                    <col style="width: 65%;">
-                    <col style="width: 35%;">
-                </colgroup>
+      
+<table class="invoice-totals-table">
+    <colgroup>
+        <col style="width: 65%;">
+        <col style="width: 35%;">
+    </colgroup>
 
-                <!-- SUBTOTAL -->
-                <tr>
-                    <td class="total-label">
-                        Subtotal Amount:
-                    </td>
+    <tbody>
+        <!-- SUBTOTAL -->
+        <tr>
+            <td class="total-label">
+                Subtotal Amount:
+            </td>
+            <td class="total-value">
+                {{ currency_symbol|default:"$" }} {{ subtotal|default:0|floatformat:2 }}
+            </td>
+        </tr>
 
-                    <td class="total-value">
-                        {{ currency_symbol|default:"$" }} {{ subtotal|default:subtotal_amount|default:0|floatformat:2 }}
-                    </td>
-                </tr>
+        <!-- VAT -->
+        <tr>
+            <td class="total-label">
+                VAT Total:
+            </td>
+            <td class="total-value">
+                {{ currency_symbol|default:"$" }} {{ vat_total|default:0|floatformat:2 }}
+            </td>
+        </tr>
 
-
-                <!-- VAT -->
-                <tr>
-                    <td class="total-label">
-                        VAT Total:
-                    </td>
-
-                    <td class="total-value">
-                        {{ currency_symbol|default:"$" }} {{ vat_total|default:0|floatformat:2 }}
-                    </td>
-                </tr>
-
-
-                <!-- GRAND TOTAL -->
-                <tr class="grand-total-row">
-
-                    <td class="total-label">
-                        Grand Total ({{ currency_code|default:"USD" }}):
-                    </td>
-
-                    <td class="total-value">
-                        {{ currency_symbol|default:"$" }} {{ grand_total|default:0|floatformat:2 }}
-                    </td>
-
-                </tr>
-
-
+        <!-- GRAND TOTAL -->
+        <tr class="grand-total-row">
+            <td class="total-label">
+                Grand Total ({{ currency_code|default:"USD" }}):
+            </td>
+            <td class="total-value">
+                {{ currency_symbol|default:"$" }} {{ grand_total|default:0|floatformat:2 }}
+            </td>
+        </tr>
                 <!-- PAID -->
                 {% if invoice.paid_amount and invoice.paid_amount > 0 %}
 
