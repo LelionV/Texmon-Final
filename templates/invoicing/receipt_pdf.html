@@ -1,87 +1,136 @@
 {% extends "documents/base_document.html" %}
 
+{% block doc_title %}Receipt{% endblock %}
+
 {% block doc_type_label %}RECEIPT{% endblock %}
+
 {% block document_number_label %}Receipt No:{% endblock %}
+
 {% block customer_heading %}Received From{% endblock %}
 
-{% block document_content %}
-<style>
+{% block document_styles %}
+
+/* =========================================================
+    RECEIPT STYLES (Matched to System Theme & Structure)
+    ========================================================= */
+
+.receipt-section-heading {
+    margin-top: 10px;
+    margin-bottom: 4px;
+    color: #0f2c59;
+    font-size: 8.5pt;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+    page-break-after: avoid;
+}
+
+.doc-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 9px;
+    font-size: 8pt;
+    table-layout: fixed;
+}
+
+.doc-table thead {
+    display: table-header-group;
+}
+
+.doc-table th {
+    background-color: #0f2c59;
+    color: #ffffff;
+    font-weight: 700;
+    font-size: 7.5pt;
+    text-transform: uppercase;
+    padding: 6px 8px;
+    border: 1px solid #1a3c70;
+    vertical-align: middle;
+}
+
+.doc-table td {
+    padding: 6px 8px;
+    color: #2b2d42;
+    border: 1px solid #cbd5e1;
+    vertical-align: middle;
+    overflow-wrap: break-word;
+}
+
+.doc-table tbody tr:nth-child(even) {
+    background-color: #f8f9fa;
+}
+
+.doc-table tbody tr {
+    page-break-inside: avoid;
+    break-inside: avoid;
+}
+
+.doc-table th.num,
+.doc-table td.num {
+    text-align: right;
+    white-space: nowrap;
+}
+
+.doc-table th.left,
+.doc-table td.left {
+    text-align: left;
+}
+
+.receipt-note {
+    font-size: 8pt;
+    line-height: 1.4;
+    margin-top: 10px;
+    padding: 8px 10px;
+    background-color: #f8f9fa;
+    border-left: 3px solid #0f2c59;
+    color: #555555;
+    page-break-inside: avoid;
+}
+
+.receipt-reference {
+    font-weight: 700;
+    color: #0f2c59;
+}
+
+.receipt-footer-note {
+    font-size: 7.5pt;
+    color: #555555;
+    margin-top: 14px;
+    line-height: 1.35;
+}
+
+@media print {
     .receipt-section-heading {
-        font-size: 10pt;
-        font-weight: bold;
-        color: #153465;
-        border-bottom: 1px solid #153465;
-        padding: 0 0 5px 0;
-        margin: 14px 0 8px 0;
+        page-break-after: avoid;
     }
-
-    .doc-table {
-        width: 100%;
-        border-collapse: collapse;
-        font-size: 9pt;
-        margin: 0 0 10px 0;
-    }
-
-    .doc-table th {
-        background-color: #153465;
-        color: #ffffff;
-        font-weight: bold;
-        text-align: left;
-        padding: 8px 7px;
-        border: 1px solid #153465;
-    }
-
-    .doc-table td {
-        padding: 8px 7px;
-        border: 1px solid #d9e0e8;
-        vertical-align: top;
-    }
-
-    .doc-table tbody tr:nth-child(even) {
-        background-color: #f5f7fa;
-    }
-
-    .doc-table .num {
-        text-align: right;
-    }
-
+    .doc-table tr,
     .receipt-note {
-        font-size: 9.5pt;
-        line-height: 1.5;
-        margin-top: 12px;
-        padding: 10px 12px;
-        background-color: #f5f7fa;
-        border-left: 3px solid #153465;
+        page-break-inside: avoid;
     }
+}
 
-    .receipt-reference {
-        font-weight: bold;
-        color: #153465;
-    }
+{% endblock %}
 
-    .receipt-footer-note {
-        font-size: 8.5pt;
-        color: #555555;
-        margin-top: 18px;
-    }
-</style>
+
+{% block document_content %}
 
 <div class="receipt-section-heading">Payment Details</div>
 
 <table class="doc-table">
     <thead>
         <tr>
-            <th style="width: 65%;">Invoice Reference</th>
-            <th class="num" style="width: 35%;">Amount Received ({{ currency_symbol }})</th>
+            <th class="left" style="width: 65%;">Invoice Reference</th>
+            <th class="num" style="width: 35%;">Amount Received ({{ currency_symbol|default:"$" }})</th>
         </tr>
     </thead>
     <tbody>
         <tr>
-            <td>
-                <strong>{{ invoice.invoice_number|default:"—" }}</strong>
+            <td class="left">
+                <strong>{{ invoice.invoice_number|default:receipt.invoice_number|default:"—" }}</strong>
             </td>
             <td class="num">
-                <strong>{{ receipt.amount|floatformat:2 }}</strong>
+                <strong>{{ currency_symbol|default:"$" }} {{ receipt.amount|default:0|floatformat:2 }}</strong>
             </td>
         </tr>
     </tbody>
@@ -89,60 +138,72 @@
 
 <div class="receipt-note">
     Received with thanks from
-    <strong>{{ invoice.client.company_name|default:"—" }}</strong>
+    <strong style="color: #2b2d42;">{{ invoice.client.company_name|default:receipt.client_name|default:"—" }}</strong>
     against invoice
-    <span class="receipt-reference">{{ invoice.invoice_number|default:"—" }}</span>.
+    <span class="receipt-reference">{{ invoice.invoice_number|default:receipt.invoice_number|default:"—" }}</span>.
 </div>
 
 <p class="receipt-footer-note">
     This receipt acknowledges payment of the amount stated above. Please retain it for your records.
 </p>
+
 {% endblock %}
+
 
 {% block totals_block %}
 <style>
     .receipt-total-wrapper {
         width: 100%;
-        margin-top: 12px;
+        margin-top: 10px;
     }
 
     .receipt-total-table {
-        width: 55%;
-        margin-left: 45%;
+        width: 50%;
+        margin-left: 50%;
         border-collapse: collapse;
-        font-size: 9.5pt;
+        font-size: 8.5pt;
+        table-layout: fixed;
     }
 
     .receipt-total-table td {
-        padding: 9px 8px;
-        border: 1px solid #d9e0e8;
+        padding: 5px 6px;
+        border: none;
+        vertical-align: middle;
     }
 
     .receipt-total-table .label {
-        text-align: left;
-        font-weight: bold;
-        color: #153465;
+        text-align: right;
+        font-weight: 700;
+        color: #0f2c59;
+        padding-right: 10px;
+        white-space: nowrap;
     }
 
     .receipt-total-table .value {
         text-align: right;
-        font-weight: bold;
+        font-weight: 700;
+        color: #0f2c59;
         white-space: nowrap;
     }
 
     .receipt-total-table .grand td {
-        background-color: #153465;
-        color: #ffffff;
-        font-size: 11pt;
-        font-weight: bold;
-        border: 1px solid #153465;
+        background-color: #f8f9fa;
+        color: #0f2c59;
+        font-size: 9pt;
+        font-weight: 700;
+        border-top: 1px solid #cbd5e1;
+        border-bottom: 2px solid #0f2c59;
+        padding-top: 6px;
+        padding-bottom: 6px;
     }
 </style>
 
-<table class="receipt-total-table">
-    <tr class="grand">
-        <td class="label">Total Received ({{ currency_symbol }}):</td>
-        <td class="value">{{ receipt.amount|floatformat:2 }}</td>
-    </tr>
-</table>
+<div class="receipt-total-wrapper">
+    <table class="receipt-total-table">
+        <tr class="grand">
+            <td class="label">Total Received ({{ currency_symbol|default:"$" }}):</td>
+            <td class="value">{{ currency_symbol|default:"$" }} {{ receipt.amount|default:0|floatformat:2 }}</td>
+        </tr>
+    </table>
+</div>
 {% endblock %}
