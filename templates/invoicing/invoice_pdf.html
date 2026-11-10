@@ -1,214 +1,231 @@
 {% extends "documents/base_document.html" %}
 
-{% block doc_type_label %}PROFORMA INVOICE{% endblock %}
+{% block doc_title %}Invoice{% endblock %}
+
+{% block doc_type_label %}INVOICE{% endblock %}
 
 {% block doc_tag %}
-    {% if proforma.status %}
-        {{ proforma.status|upper }}
+    {% if invoice.status %}
+        {{ invoice.status|upper }}
     {% else %}
-        PROFORMA
+        INVOICE
     {% endif %}
 {% endblock %}
 
-{% block document_content %}
+{% block document_styles %}
 
-<style>
-    /* =========================================================
-       PROFORMA PDF TABLES & COLUMN ALIGNMENT (No Wrap / Fixed Layout)
-       ========================================================= */
+/* =========================================================
+    INVOICE PDF TABLES & COLUMN ALIGNMENT (No Wrap / Fixed Layout)
+    ========================================================= */
 
-    .proforma-wrapper {
-        width: 100%;
-        margin-bottom: 12px;
-    }
+.invoice-wrapper {
+    width: 100%;
+    margin-bottom: 12px;
+}
 
-    table.sync-table {
-        width: 100% !important;
-        border-collapse: collapse !important;
-        table-layout: fixed !important;
-        margin: 0 0 10px 0 !important;
-    }
+table.sync-table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+    table-layout: fixed !important;
+    margin: 0 0 10px 0 !important;
+}
 
-    table.sync-table thead {
-        display: table-header-group !important;
-    }
+table.sync-table thead {
+    display: table-header-group !important;
+}
 
-    table.sync-table tbody {
-        display: table-row-group !important;
-    }
+table.sync-table tbody {
+    display: table-row-group !important;
+}
 
-    table.sync-table tr {
-        display: table-row !important;
-        page-break-inside: avoid !important;
-    }
+table.sync-table tr {
+    display: table-row !important;
+    page-break-inside: avoid !important;
+}
 
-    table.sync-table th {
-        display: table-cell !important;
-        background-color: #0f2c59 !important;
-        color: #ffffff !important;
-        padding: 6px 8px !important;
-        font-size: 7.5pt !important;
-        text-transform: uppercase;
-        font-weight: 700;
-        letter-spacing: 0.4px;
-        vertical-align: middle !important;
-        border: 1px solid #1a3c70;
-        white-space: nowrap !important;
-        overflow: hidden;
-    }
+table.sync-table th {
+    display: table-cell !important;
+    background-color: #0f2c59 !important;
+    color: #ffffff !important;
+    padding: 6px 8px !important;
+    font-size: 7.5pt !important;
+    text-transform: uppercase;
+    font-weight: 700;
+    letter-spacing: 0.4px;
+    vertical-align: middle !important;
+    border: 1px solid #1a3c70;
+    white-space: nowrap !important;
+    overflow: hidden;
+}
 
-    table.sync-table td {
-        display: table-cell !important;
-        color: #2b2d42 !important;
-        padding: 6px 8px !important;
-        font-size: 8.5pt !important;
-        border-bottom: 1px solid #e2e8f0;
-        vertical-align: middle !important;
-        white-space: nowrap !important;
-        overflow: hidden;
-        text-overflow: ellipsis;
-    }
+table.sync-table td {
+    display: table-cell !important;
+    color: #2b2d42 !important;
+    padding: 6px 8px !important;
+    font-size: 8.5pt !important;
+    border: 1px solid #cbd5e1;
+    vertical-align: middle !important;
+    white-space: nowrap !important;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
 
-    /* Allow description cells to wrap normally if needed, everything else nowrap */
-    table.sync-table td.desc-cell {
-        white-space: normal !important;
-    }
+/* Allow description cells to wrap normally if needed, everything else nowrap */
+table.sync-table td.desc-cell {
+    white-space: normal !important;
+}
 
-    table.sync-table tbody tr:nth-child(even) {
-        background-color: #f8f9fa;
-    }
+table.sync-table tbody tr:nth-child(even) {
+    background-color: #f8f9fa;
+}
 
-    /* Column Alignment Helpers */
-    .sync-table th.left, .sync-table td.left {
-        text-align: left;
-    }
+/* Column Alignment Helpers */
+.sync-table th.left, .sync-table td.left {
+    text-align: left;
+}
 
-    .sync-table th.center, .sync-table td.center {
-        text-align: center;
-    }
+.sync-table th.center, .sync-table td.center {
+    text-align: center;
+}
 
-    .sync-table th.num, .sync-table td.num {
-        text-align: right;
-        white-space: nowrap !important;
-    }
+.sync-table th.num, .sync-table td.num {
+    text-align: right;
+    white-space: nowrap !important;
+}
 
-    /* Section Headings */
+/* Section Headings */
+.section-heading {
+    margin-top: 10px;
+    margin-bottom: 4px;
+    color: #0f2c59;
+    font-size: 8.5pt;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+    page-break-after: avoid;
+}
+
+.shipment-value {
+    font-weight: 600;
+    color: #0f2c59;
+}
+
+/* =========================================================
+    INVOICE SUMMARY & TOTALS
+    ========================================================= */
+
+.invoice-summary {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 8px;
+}
+
+.invoice-summary > tbody > tr > td {
+    vertical-align: top;
+}
+
+.invoice-details {
+    width: 48%;
+    padding-right: 15px;
+    font-size: 7.5pt;
+    line-height: 1.5;
+    color: #555555;
+}
+
+.invoice-totals {
+    width: 52%;
+    vertical-align: top;
+    padding: 0;
+}
+
+.invoice-totals-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 8.5pt;
+    table-layout: fixed;
+    margin: 0;
+}
+
+.invoice-totals-table td {
+    padding: 4px 6px;
+    vertical-align: middle;
+    border: none;
+    white-space: nowrap !important;
+}
+
+.total-label {
+    text-align: right;
+    color: #555555;
+    font-weight: 600;
+    white-space: nowrap !important;
+}
+
+.total-value {
+    text-align: right;
+    font-weight: 600;
+    white-space: nowrap !important;
+    color: #0f2c59;
+}
+
+.grand-total-row td {
+    border-top: 1px solid #cbd5e1;
+    border-bottom: 2px solid #0f2c59;
+    padding-top: 6px !important;
+    padding-bottom: 6px !important;
+    font-size: 9pt;
+    font-weight: 700;
+    background-color: #f8f9fa;
+    color: #0f2c59;
+    white-space: nowrap !important;
+}
+
+.paid-row td {
+    color: #008751;
+    font-weight: 600;
+    border-bottom: 1px solid #eeeeee;
+    white-space: nowrap !important;
+}
+
+.balance-row td {
+    border-top: 2px solid #d90429;
+    border-bottom: 2px solid #d90429;
+    padding-top: 6px !important;
+    padding-bottom: 6px !important;
+    font-size: 9pt;
+    font-weight: 700;
+    color: #d90429;
+    background-color: #f8f9fa;
+    white-space: nowrap !important;
+}
+
+.invoice-notes {
+    margin-top: 10px;
+    padding: 8px 10px;
+    background-color: #f8f9fa;
+    border-left: 3px solid #0f2c59;
+    font-size: 7.5pt;
+    line-height: 1.4;
+    color: #555555;
+    page-break-inside: avoid;
+}
+
+@media print {
     .section-heading {
-        margin-top: 10px;
-        margin-bottom: 4px;
-        color: #0f2c59;
-        font-size: 8.5pt;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        white-space: nowrap;
+        page-break-after: avoid;
     }
-
-    .shipment-value {
-        font-weight: 600;
-        color: #0f2c59;
-    }
-
-    /* =========================================================
-       PROFORMA SUMMARY & TOTALS
-       ========================================================= */
-
-    .proforma-summary {
-        width: 100%;
-        border-collapse: collapse;
-        margin-top: 8px;
-    }
-
-    .proforma-summary > tbody > tr > td {
-        vertical-align: top;
-    }
-
-    .proforma-details {
-        width: 50%;
-        padding-right: 20px;
-        font-size: 7.5pt;
-        line-height: 1.5;
-        color: #555555;
-    }
-
-    .proforma-totals {
-        width: 50%;
-        vertical-align: top;
-    }
-
-    .proforma-totals-table {
-        width: 100%;
-        border-collapse: collapse;
-        font-size: 8.5pt;
-        table-layout: fixed;
-    }
-
-    .proforma-totals-table td {
-        padding: 4px 6px;
-        vertical-align: middle;
-        border-bottom: none;
-        white-space: nowrap !important;
-    }
-
-    .total-label {
-        text-align: right;
-        color: #555555;
-        font-weight: 600;
-        padding-right: 10px;
-        white-space: nowrap !important;
-    }
-
-    .total-value {
-        text-align: right;
-        font-weight: 600;
-        white-space: nowrap !important;
-        color: #0f2c59;
-    }
-
-    .grand-total-row td {
-        border-top: 1px solid #cbd5e1;
-        border-bottom: 2px solid #0f2c59;
-        padding-top: 6px !important;
-        padding-bottom: 6px !important;
-        font-size: 9pt;
-        font-weight: 700;
-        background-color: #f8f9fa;
-        color: #0f2c59;
-        white-space: nowrap !important;
-    }
-
-    .paid-row td {
-        color: #008751;
-        font-weight: 600;
-        white-space: nowrap !important;
-    }
-
-    .balance-row td {
-        border-top: 2px solid #d90429;
-        border-bottom: 2px solid #d90429;
-        padding-top: 6px !important;
-        padding-bottom: 6px !important;
-        font-size: 9pt;
-        font-weight: 700;
-        color: #d90429;
-        background-color: #f8f9fa;
-        white-space: nowrap !important;
-    }
-
-    .proforma-notes {
-        margin-top: 10px;
-        padding: 8px 10px;
-        background-color: #f8f9fa;
-        border-left: 3px solid #0f2c59;
-        font-size: 7.5pt;
-        line-height: 1.4;
-        color: #555555;
+    table.sync-table tr,
+    .invoice-notes {
         page-break-inside: avoid;
     }
-</style>
+}
+
+{% endblock %}
 
 
-<div class="proforma-wrapper">
+{% block document_content %}
+
+<div class="invoice-wrapper">
 
     <!-- =========================================================
          TABLE 1: SHIPMENT DETAILS
@@ -239,16 +256,14 @@
         <tbody>
             <tr>
                 <td class="left shipment-value">
-                    {{ proforma.commodity|default:invoice.commodity|default:"—" }}
+                    {{ invoice.commodity|default:"—" }}
                 </td>
-                <td class="left">{{ proforma.origin_port|default:invoice.origin_port|default:"—" }}</td>
-                <td class="left">{{ proforma.destination_port|default:invoice.destination_port|default:"—" }}</td>
-                <td class="left">{{ proforma.vessel|default:invoice.vessel|default:"—" }}</td>
-                <td class="left">{{ proforma.bl_number|default:invoice.bl_number|default:"—" }}</td>
+                <td class="left">{{ invoice.origin_port|default:"—" }}</td>
+                <td class="left">{{ invoice.destination_port|default:"—" }}</td>
+                <td class="left">{{ invoice.vessel|default:"—" }}</td>
+                <td class="left">{{ invoice.bl_number|default:"—" }}</td>
                 <td class="center">
-                    {% if proforma.due_date %}
-                        {{ proforma.due_date|date:"d/m/Y" }}
-                    {% elif invoice.due_date %}
+                    {% if invoice.due_date %}
                         {{ invoice.due_date|date:"d/m/Y" }}
                     {% else %}
                         —
@@ -263,7 +278,7 @@
          TABLE 2: LINE ITEMS
          ========================================================= -->
 
-    <div class="section-heading">Proforma Breakdown</div>
+    <div class="section-heading">Invoice Breakdown</div>
 
     <table class="sync-table">
 
@@ -293,6 +308,8 @@
 
                 <td class="left desc-cell" style="white-space: normal !important;">
                     {% if line.item_id and line.item.code %}
+                        <span style="color: #718096; font-size: 7.5pt; margin-right: 4px; white-space: nowrap;">[{{ line.item.code }}]</span>
+                    {% elif line.item and line.item.code %}
                         <span style="color: #718096; font-size: 7.5pt; margin-right: 4px; white-space: nowrap;">[{{ line.item.code }}]</span>
                     {% endif %}
 
@@ -344,28 +361,28 @@
 
 
 <!-- =========================================================
-     PROFORMA DETAILS + TOTALS
+     INVOICE DETAILS + TOTALS
      ========================================================= -->
 
-<table class="proforma-summary">
+<table class="invoice-summary">
 
     <tr>
 
         <!-- =====================================================
-             LEFT: PROFORMA DETAILS
+             LEFT: INVOICE DETAILS
              ===================================================== -->
 
-        <td class="proforma-details" style="white-space: normal !important;">
+        <td class="invoice-details" style="white-space: normal !important;">
 
-            {% if proforma.payment_terms %}
+            {% if invoice.payment_terms %}
                 <strong style="color: #0f2c59;">Payment Terms:</strong>
-                <div style="margin-top: 2px; color: #2b2d42; white-space: normal !important;">{{ proforma.payment_terms }}</div>
+                <div style="margin-top: 2px; color: #2b2d42; white-space: normal !important;">{{ invoice.payment_terms }}</div>
                 <br>
             {% endif %}
 
-            {% if proforma.valid_until %}
-                <strong style="color: #0f2c59;">Valid Until:</strong>
-                <span style="color: #2b2d42;">{{ proforma.valid_until|date:"d/m/Y" }}</span>
+            {% if invoice.invoice_date %}
+                <strong style="color: #0f2c59;">Invoice Date:</strong>
+                <span style="color: #2b2d42;">{{ invoice.invoice_date|date:"d/m/Y" }}</span>
                 <br>
             {% endif %}
 
@@ -381,12 +398,12 @@
              RIGHT: TOTALS
              ===================================================== -->
 
-        <td class="proforma-totals">
+        <td class="invoice-totals">
 
-            <table class="proforma-totals-table">
+            <table class="invoice-totals-table">
                 <colgroup>
-                    <col style="width: 55%;">
-                    <col style="width: 45%;">
+                    <col style="width: 65%;">
+                    <col style="width: 35%;">
                 </colgroup>
 
                 <!-- SUBTOTAL -->
@@ -396,7 +413,7 @@
                     </td>
 
                     <td class="total-value">
-                        {{ currency_symbol|default:"$" }} {{ subtotal|default:0|floatformat:2 }}
+                        {{ currency_symbol|default:"$" }} {{ subtotal|default:subtotal_amount|default:0|floatformat:2 }}
                     </td>
                 </tr>
 
@@ -428,7 +445,7 @@
 
 
                 <!-- PAID -->
-                {% if proforma.paid_amount %}
+                {% if invoice.paid_amount and invoice.paid_amount > 0 %}
 
                 <tr class="paid-row">
 
@@ -437,7 +454,7 @@
                     </td>
 
                     <td class="total-value" style="color: #008751;">
-                        {{ currency_symbol|default:"$" }} {{ proforma.paid_amount|default:0|floatformat:2 }}
+                        {{ currency_symbol|default:"$" }} {{ invoice.paid_amount|floatformat:2 }}
                     </td>
 
                 </tr>
@@ -451,7 +468,7 @@
                     </td>
 
                     <td class="total-value" style="color: #d90429;">
-                        {{ currency_symbol|default:"$" }} {{ proforma.balance_due|default:0|floatformat:2 }}
+                        {{ currency_symbol|default:"$" }} {{ invoice.balance_due|default:0|floatformat:2 }}
                     </td>
 
                 </tr>
@@ -471,11 +488,11 @@
      NOTES
      ========================================================= -->
 
-{% if proforma.notes %}
+{% if invoice.notes %}
 
-<div class="proforma-notes" style="white-space: normal !important;">
+<div class="invoice-notes" style="white-space: normal !important;">
     <div style="font-weight: 700; text-transform: uppercase; margin-bottom: 3px; color: #0f2c59; letter-spacing: 0.3px;">Notes</div>
-    {{ proforma.notes|linebreaksbr }}
+    {{ invoice.notes|linebreaksbr }}
 </div>
 
 {% endif %}
@@ -485,11 +502,11 @@
      TERMS & CONDITIONS
      ========================================================= -->
 
-{% if proforma.terms %}
+{% if invoice.terms %}
 
-<div class="proforma-notes" style="white-space: normal !important;">
+<div class="invoice-notes" style="white-space: normal !important;">
     <div style="font-weight: 700; text-transform: uppercase; margin-bottom: 3px; color: #0f2c59; letter-spacing: 0.3px;">Terms &amp; Conditions</div>
-    {{ proforma.terms|linebreaksbr }}
+    {{ invoice.terms|linebreaksbr }}
 </div>
 
 {% endif %}
