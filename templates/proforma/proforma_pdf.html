@@ -318,13 +318,8 @@
         {% for line in items %}
 
             <tr>
-
                 <td class="left">
                     {% if line.item and line.item.code %}
-                        <span class="item-code">
-                            {{ line.item.code }}
-                        </span>
-                    {% elif line.item_id and line.item.code %}
                         <span class="item-code">
                             {{ line.item.code }}
                         </span>
@@ -337,13 +332,9 @@
                     <span class="item-description">
                         {{ line.description }}
                     </span>
-                    {% if line.details %}
-                        <br>
-                        <small style="color: #718096; font-size: 7.5pt;">
-                            {{ line.details }}
-                        </small>
-                    {% endif %}
                 </td>
+
+
 
                 <td class="num">
                     {{ line.quantity|default:0|floatformat:2|intcomma  }}
