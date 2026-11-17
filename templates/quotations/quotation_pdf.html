@@ -277,8 +277,8 @@
             <th class="left" style="width: 8%;">Code</th>
             <th class="left" style="width: 34%;">Description</th>
             <th class="num" style="width: 12%;">Quantity</th>
-            <th class="num" style="width: 16%;">Unit Price ({{ currency_code }})</th>
-            <th class="num" style="width: 14%;">VAT ({{ currency_code }})</th>
+            <th class="num" style="width: 16%;">Unit Price</th>
+            <th class="num" style="width: 14%;">VAT </th>
             <th class="num" style="width: 16%;">Total</th>
         </tr>
     </thead>
@@ -306,23 +306,23 @@
                 </td>
 
                 <td class="num">
-                    {{ line.quantity|floatformat:2 }}
+                    {{ line.quantity|floatformat:2|intcomma  }}
                 </td>
 
                 <td class="num">
                     {{ currency_symbol }}
-                    {{ line.unit_price|floatformat:2 }}
+                    {{ line.unit_price|floatformat:2|intcomma  }}
                 </td>
 
                 <td class="num">
                     {{ currency_symbol }}
-                    {{ line.vat_amount|floatformat:2 }}
+                    {{ line.vat_amount|floatformat:2|intcomma  }}
                 </td>
 
                 <td class="num">
                     <strong>
                         {{ currency_symbol }}
-                        {{ line.total_amount|floatformat:2 }}
+                        {{ line.total_amount|floatformat:2|intcomma  }}
                     </strong>
                 </td>
 
@@ -355,11 +355,11 @@
             <td style="width: 48%;">
 
                 <span class="payment-label">
-                    Payment Terms:
+                    
                 </span>
 
                 <div style="margin-top: 4px; color: #2b2d42;">
-                    {{ quotation.payment_terms|default:"As agreed" }}
+                    
                 </div>
 
             </td>
@@ -377,7 +377,7 @@
 
                             <td class="total-value" style="width: 35%;">
                                 {{ currency_symbol }}
-                                {{ subtotal_amount|default:subtotal|floatformat:2 }}
+                                {{ subtotal_amount|default:subtotal|floatformat:2|intcomma  }}
                             </td>
                         </tr>
 
@@ -388,7 +388,7 @@
 
                             <td class="total-value">
                                 {{ currency_symbol }}
-                                {{ vat_total|floatformat:2 }}
+                                {{ vat_total|floatformat:2|intcomma  }}
                             </td>
                         </tr>
 
@@ -400,7 +400,7 @@
 
                             <td class="total-value">
                                 {{ currency_symbol }}
-                                {{ grand_total|floatformat:2 }}
+                                {{ grand_total|floatformat:2|intcomma  }}
                             </td>
 
                         </tr>
