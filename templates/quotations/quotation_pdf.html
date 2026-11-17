@@ -229,7 +229,6 @@
             <th class="left" style="width: 24%;">Commodity</th>
             <th class="left" style="width: 22%;">POL</th>
             <th class="left" style="width: 22%;">POD</th>
-            <th class="center" style="width: 12%;">UOM</th>
             <th class="left" style="width: 20%;">FPOD</th>
         </tr>
     </thead>
@@ -246,14 +245,6 @@
 
             <td class="left">
                 {{ quotation.destination_port|default:"—" }}
-            </td>
-
-            <td class="center">
-                {{ quotation.commodity_quantity|default:"—" }}
-
-                {% if quotation.commodity_unit %}
-                    {{ quotation.commodity_unit }}
-                {% endif %}
             </td>
 
             <td class="left">
