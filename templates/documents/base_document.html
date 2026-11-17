@@ -517,7 +517,6 @@
                         <tr>
                             <th style="width: 5%;" class="text-center">#</th>
                             <th>Description</th>
-                            <th style="width: 12%;" class="text-right">Qty</th>
                             <th style="width: 18%;" class="text-right">Unit Price</th>
                             <th style="width: 20%;" class="text-right">Amount</th>
                         </tr>
@@ -528,7 +527,6 @@
                             <tr>
                                 <td class="text-center">{{ forloop.counter }}</td>
                                 <td>{{ item.name|default:item.description }}</td>
-                                <td class="text-right">{{ item.quantity|intcomma }}</td>
                                 <td class="text-right">
                                     {{ currency_symbol }} {{ item.unit_price|floatformat:2|intcomma }}
                                 </td>
