@@ -231,8 +231,6 @@ table.sync-table tbody tr:nth-child(even) {
          TABLE 1: SHIPMENT DETAILS
          ========================================================= -->
 
-    <div class="section-heading">Shipment Details</div>
-
     <table class="sync-table shipment-table">
         <colgroup>
             <col style="width: 18%;">
@@ -278,8 +276,6 @@ table.sync-table tbody tr:nth-child(even) {
          TABLE 2: LINE ITEMS
          ========================================================= -->
 
-    <div class="section-heading">Invoice Breakdown</div>
-
     <table class="sync-table">
 
         <colgroup>
@@ -292,11 +288,12 @@ table.sync-table tbody tr:nth-child(even) {
 
         <thead>
             <tr>
+                <th class="left">Code</th>
                 <th class="left">Description</th>
                 <th class="num">Quantity</th>
                 <th class="num">Unit Price</th>
-                <th class="num">VAT ({{ currency_symbol|default:"$" }})</th>
-                <th class="num">Total Amount ({{ currency_symbol|default:"$" }})</th>
+                <th class="num">VAT</th>
+                <th class="num">Total Amount</th>
             </tr>
         </thead>
 
@@ -312,7 +309,8 @@ table.sync-table tbody tr:nth-child(even) {
                     {% elif line.item and line.item.code %}
                         <span style="color: #718096; font-size: 7.5pt; margin-right: 4px; white-space: nowrap;">[{{ line.item.code }}]</span>
                     {% endif %}
-
+                </td>
+                <td>
                     <strong style="color: #2b2d42;">{{ line.description }}</strong>
 
                     {% if line.details %}
@@ -324,19 +322,19 @@ table.sync-table tbody tr:nth-child(even) {
                 </td>
 
                 <td class="num">
-                    {{ line.quantity|default:0|floatformat:2 }}
+                    {{ line.quantity|default:0|floatformat:2|intcomma  }}
                 </td>
 
                 <td class="num">
-                    {{ currency_symbol|default:"$" }} {{ line.unit_price|default:0|floatformat:2 }}
+                    {{ currency_symbol|default:"$" }} {{ line.unit_price|default:0|floatformat:2|intcomma  }}
                 </td>
 
                 <td class="num">
-                    {{ currency_symbol|default:"$" }} {{ line.vat_amount|default:0|floatformat:2 }}
+                    {{ currency_symbol|default:"$" }} {{ line.vat_amount|default:0|floatformat:2|intcomma  }}
                 </td>
 
                 <td class="num">
-                    <strong>{{ currency_symbol|default:"$" }} {{ line.total_amount|default:0|floatformat:2 }}</strong>
+                    <strong>{{ currency_symbol|default:"$" }} {{ line.total_amount|default:0|floatformat:2|intcomma  }}</strong>
                 </td>
 
             </tr>
@@ -414,7 +412,7 @@ table.sync-table tbody tr:nth-child(even) {
                 Subtotal Amount:
             </td>
             <td class="total-value">
-                {{ currency_symbol|default:"$" }} {{ subtotal|default:0|floatformat:2 }}
+                {{ currency_symbol|default:"$" }} {{ subtotal|default:0|floatformat:2|intcomma  }}
             </td>
         </tr>
 
@@ -424,7 +422,7 @@ table.sync-table tbody tr:nth-child(even) {
                 VAT Total:
             </td>
             <td class="total-value">
-                {{ currency_symbol|default:"$" }} {{ vat_total|default:0|floatformat:2 }}
+                {{ currency_symbol|default:"$" }} {{ vat_total|default:0|floatformat:2|intcomma  }}
             </td>
         </tr>
 
@@ -434,7 +432,7 @@ table.sync-table tbody tr:nth-child(even) {
                 Grand Total ({{ currency_code|default:"USD" }}):
             </td>
             <td class="total-value">
-                {{ currency_symbol|default:"$" }} {{ grand_total|default:0|floatformat:2 }}
+                {{ currency_symbol|default:"$" }} {{ grand_total|default:0|floatformat:2|intcomma  }}
             </td>
         </tr>
                 <!-- PAID -->
@@ -447,7 +445,7 @@ table.sync-table tbody tr:nth-child(even) {
                     </td>
 
                     <td class="total-value" style="color: #008751;">
-                        {{ currency_symbol|default:"$" }} {{ invoice.paid_amount|floatformat:2 }}
+                        {{ currency_symbol|default:"$" }} {{ invoice.paid_amount|floatformat:2|intcomma  }}
                     </td>
 
                 </tr>
@@ -461,7 +459,7 @@ table.sync-table tbody tr:nth-child(even) {
                     </td>
 
                     <td class="total-value" style="color: #d90429;">
-                        {{ currency_symbol|default:"$" }} {{ invoice.balance_due|default:0|floatformat:2 }}
+                        {{ currency_symbol|default:"$" }} {{ invoice.balance_due|default:0|floatformat:2|intcomma  }}
                     </td>
 
                 </tr>
