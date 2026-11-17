@@ -528,12 +528,12 @@
                             <tr>
                                 <td class="text-center">{{ forloop.counter }}</td>
                                 <td>{{ item.name|default:item.description }}</td>
-                                <td class="text-right">{{ item.quantity }}</td>
+                                <td class="text-right">{{ item.quantity|intcomma }}</td>
                                 <td class="text-right">
-                                    {{ currency_symbol }} {{ item.unit_price|floatformat:2 }}
+                                    {{ currency_symbol }} {{ item.unit_price|floatformat:2|intcomma }}
                                 </td>
                                 <td class="text-right">
-                                    {{ currency_symbol }} {{ item.total|default:item.amount|floatformat:2 }}
+                                    {{ currency_symbol }} {{ item.total|default:item.amount|floatformat:2|intcomma }}
                                 </td>
                             </tr>
                         {% empty %}
