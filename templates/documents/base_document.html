@@ -45,20 +45,23 @@
         @page {
             size: A4;
             margin: 10mm 10mm 18mm 10mm;
-
+            @bottom-left {
+                content: "TEXMON LOGISTICS LIMITED - Professionally Delivering Excellence";
+                font-size: 7pt;
+                color: #555555;
+                white-space: nowrap;
+                border-top: 1px solid #0f2c59;
+                padding-top: 5px;
+                width: 100%;
+            }
+        
             @bottom-right {
                 content: "Page " counter(page) " of " counter(pages);
                 font-size: 7pt;
                 color: #718096;
-            }
-            @bottom-center {
-                content: "TEXMON LOGISTICS LIMITED - Professionally Delivering Excellence";
-                font-size: 7pt;
-                font-weight: 600;
-                color: #555555;
+                white-space: nowrap;
                 border-top: 1px solid #0f2c59;
                 padding-top: 5px;
-                width: 100%;
             }
         }
 
