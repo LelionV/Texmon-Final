@@ -239,7 +239,7 @@ class Client(AuditModel):
         ordering = ["company_name"]
 
     def __str__(self):
-        return f"{self.company_name} ({self.customer_code})"
+        return f"{self.company_name}"
 
     def save(self, *args, **kwargs):
         if not self.customer_code:
