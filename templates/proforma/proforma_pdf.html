@@ -243,10 +243,6 @@
 
 {% if proforma.commodity or proforma.origin_port or proforma.destination_port or quotation.commodity_quantity or proforma.bl_number or proforma.final_destination %}
 
-<div class="quote-section">
-    Shipment Details
-</div>
-
 <table class="doc-table shipment-table">
 
     <thead>
@@ -304,10 +300,6 @@
      QUOTATION BREAKDOWN (LINE ITEMS)
      ===================================================== -->
 
-<div class="quote-section">
-    Invoice Breakdown
-</div>
-
 <table class="doc-table pricing-table">
 
     <thead>
@@ -315,8 +307,8 @@
             <th class="left" style="width: 8%;">Code</th>
             <th class="left" style="width: 34%;">Description</th>
             <th class="num" style="width: 12%;">Quantity</th>
-            <th class="num" style="width: 16%;">Unit Price ({{ currency_code|default:"USD" }})</th>
-            <th class="num" style="width: 14%;">VAT ({{ currency_code|default:"USD" }})</th>
+            <th class="num" style="width: 16%;">Unit Price</th>
+            <th class="num" style="width: 14%;">VAT</th>
             <th class="num" style="width: 16%;">Total</th>
         </tr>
     </thead>
@@ -354,23 +346,23 @@
                 </td>
 
                 <td class="num">
-                    {{ line.quantity|default:0|floatformat:2 }}
+                    {{ line.quantity|default:0|floatformat:2|intcomma  }}
                 </td>
 
                 <td class="num">
                     {{ currency_symbol|default:"$" }}
-                    {{ line.unit_price|default:0|floatformat:2 }}
+                    {{ line.unit_price|default:0|floatformat:2|intcomma  }}
                 </td>
 
                 <td class="num">
                     {{ currency_symbol|default:"$" }}
-                    {{ line.vat_amount|default:0|floatformat:2 }}
+                    {{ line.vat_amount|default:0|floatformat:2|intcomma  }}
                 </td>
 
                 <td class="num">
                     <strong>
                         {{ currency_symbol|default:"$" }}
-                        {{ line.total_amount|default:0|floatformat:2 }}
+                        {{ line.total_amount|default:0|floatformat:2|intcomma  }}
                     </strong>
                 </td>
 
@@ -435,7 +427,7 @@
             </td>
             <td class="total-value" style="width: 35%;">
                 {{ currency_symbol|default:"$" }}
-                {{ subtotal|default:0|floatformat:2 }}
+                {{ subtotal|default:0|floatformat:2|intcomma  }}
             </td>
         </tr>
 
@@ -445,7 +437,7 @@
             </td>
             <td class="total-value">
                 {{ currency_symbol|default:"$" }}
-                {{ vat_total|default:0|floatformat:2 }}
+                {{ vat_total|default:0|floatformat:2|intcomma  }}
             </td>
         </tr>
 
@@ -455,7 +447,7 @@
             </td>
             <td class="total-value">
                 {{ currency_symbol|default:"$" }}
-                {{ grand_total|default:0|floatformat:2 }}
+                {{ grand_total|default:0|floatformat:2|intcomma  }}
             </td>
         </tr>
 
@@ -468,7 +460,7 @@
                                 </td>
                                 <td class="total-value paid-value">
                                     {{ currency_symbol|default:"$" }}
-                                    {{ proforma.paid_amount|floatformat:2 }}
+                                    {{ proforma.paid_amount|floatformat:2|intcomma  }}
                                 </td>
                             </tr>
 
@@ -478,7 +470,7 @@
                                 </td>
                                 <td class="total-value">
                                     {{ currency_symbol|default:"$" }}
-                                    {{ proforma.balance_due|default:0|floatformat:2 }}
+                                    {{ proforma.balance_due|default:0|floatformat:2|intcomma  }}
                                 </td>
                             </tr>
 
