@@ -132,6 +132,8 @@ class Supplier(AuditModel):
         WAREHOUSE = "warehouse", "Warehouse / Storage"
         INSURANCE = "insurance", "Insurance"
         GENERAL = "general", "General Vendor"
+        PORT_AUTHORITY = "PORT_AUTHORITY", "Port Authority"
+        CONTAINER_FREIGHT_STATION = "CONTAINER_FREIGHT_STATION", "Port Authority"
 
     company_name = models.CharField(max_length=150)
     contact_person = models.CharField(max_length=150, blank=True)
