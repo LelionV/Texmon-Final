@@ -228,7 +228,6 @@ class Client(AuditModel):
 
     currency = models.ForeignKey(Currency, on_delete=models.PROTECT, related_name="clients", null=True, blank=True)
     payment_terms = models.ForeignKey(PaymentTerm, on_delete=models.PROTECT, related_name="clients", null=True, blank=True)
-  
     sales_representative = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True,
         related_name="clients",
