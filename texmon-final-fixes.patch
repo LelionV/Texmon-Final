@@ -1,0 +1,394 @@
+diff --git a/masters/api.py b/masters/api.py
+index c89b5bd..400e67f 100644
+--- a/masters/api.py
++++ b/masters/api.py
+@@ -6,10 +6,9 @@ API consumer needs full CRUD).
+ - client_autofill: selecting a client on the quotation form auto-populates
+   currency, payment terms, sales rep and billing info.
+ - item_autofill: selecting an item on a quotation/proforma/invoice line
+-  auto-populates that line's description, unit price and VAT percentage.
+-  The values are only a starting point -- every field they fill is a
+-  normal editable input, so price and VAT can still be adjusted by hand
+-  for that specific line without changing the master Item record.
++  auto-populates that line's code, description and VAT percentage. Unit
++  price is not provided: it is set per line while the quotation is prepared.
++  Every field filled is a normal editable input.
+ """
+ 
+ from django.http import JsonResponse
+@@ -31,6 +30,5 @@ def item_autofill(request, pk):
+     return JsonResponse({
+         "code": item.code,
+         "description": item.description or item.name,
+-        "unit_price": str(item.selling_price),
+         "vat_percentage": str(item.vat_percentage) if item.vat_applicable else "0.00",
+     })
+diff --git a/masters/forms.py b/masters/forms.py
+index ae5f913..91c5811 100644
+--- a/masters/forms.py
++++ b/masters/forms.py
+@@ -42,3 +42,43 @@ class ReasonModelForm(forms.ModelForm):
+ 
+ def build_master_form(entry):
+     return modelform_factory(entry["model"], form=ReasonModelForm, fields=entry["fields"])
++
++
++class ReferenceDocumentTextFormMixin(forms.ModelForm):
++    """
++    Lets a document form (quotation, proforma) take the reference as free
++    text instead of a fixed dropdown.
++
++    - The user types any reference (e.g. "Client PO #4021").
++    - Existing Reference Documents are offered as suggestions via a datalist.
++    - On save, the text is matched (case-insensitively) to an existing
++      ReferenceDocument, or a new one is created automatically. That new one
++      then appears in the suggestions, so it can be reused without creating
++      a duplicate.
++
++    Subclasses must leave ``reference_document`` out of their Meta.fields.
++    The form drives that relation through ``reference_document_name`` instead.
++    """
++    reference_document_name = forms.CharField(
++        required=False, max_length=150, label="Reference Document",
++        help_text="Type a reference or pick a previous one. A new reference is saved automatically the first time you use it.",
++        widget=forms.TextInput(attrs={
++            "class": "form-control", "list": "reference-document-suggestions",
++            "placeholder": "e.g. Client PO #4021", "autocomplete": "off",
++        }),
++    )
++
++    def __init__(self, *args, **kwargs):
++        super().__init__(*args, **kwargs)
++        from .models import ReferenceDocument
++        self.reference_suggestions = list(
++            ReferenceDocument.objects.filter(is_active=True).values_list("name", flat=True)
++        )
++        if self.instance.pk and self.instance.reference_document_id:
++            self.fields["reference_document_name"].initial = self.instance.reference_document.name
++
++    def save(self, commit=True):
++        from .models import ReferenceDocument
++        name = self.cleaned_data.get("reference_document_name", "")
++        self.instance.reference_document = ReferenceDocument.get_or_create_by_name(name)
++        return super().save(commit=commit)
+diff --git a/masters/migrations/0006_client_currency_payment_terms_optional.py b/masters/migrations/0006_client_currency_payment_terms_optional.py
+new file mode 100644
+index 0000000..f7a16cc
+--- /dev/null
++++ b/masters/migrations/0006_client_currency_payment_terms_optional.py
+@@ -0,0 +1,50 @@
++import django.db.models.deletion
++from django.conf import settings
++from django.db import migrations, models
++
++
++class Migration(migrations.Migration):
++
++    dependencies = [
++        ("masters", "0005_alter_historicalreferencedocument_file_and_more"),
++        migrations.swappable_dependency(settings.AUTH_USER_MODEL),
++    ]
++
++    operations = [
++        migrations.AlterField(
++            model_name="client",
++            name="currency",
++            field=models.ForeignKey(
++                blank=True, null=True,
++                on_delete=django.db.models.deletion.PROTECT,
++                related_name="clients", to="masters.currency",
++            ),
++        ),
++        migrations.AlterField(
++            model_name="client",
++            name="payment_terms",
++            field=models.ForeignKey(
++                blank=True, null=True,
++                on_delete=django.db.models.deletion.PROTECT,
++                related_name="clients", to="masters.paymentterm",
++            ),
++        ),
++        migrations.AlterField(
++            model_name="historicalclient",
++            name="currency",
++            field=models.ForeignKey(
++                blank=True, db_constraint=False, null=True,
++                on_delete=django.db.models.deletion.DO_NOTHING,
++                related_name="+", to="masters.currency",
++            ),
++        ),
++        migrations.AlterField(
++            model_name="historicalclient",
++            name="payment_terms",
++            field=models.ForeignKey(
++                blank=True, db_constraint=False, null=True,
++                on_delete=django.db.models.deletion.DO_NOTHING,
++                related_name="+", to="masters.paymentterm",
++            ),
++        ),
++    ]
+diff --git a/masters/models.py b/masters/models.py
+index c4bf760..d0b1786 100644
+--- a/masters/models.py
++++ b/masters/models.py
+@@ -224,8 +224,16 @@ class Client(AuditModel):
+     shipping_address = models.TextField(blank=True)
+     tax_number = models.CharField(max_length=50, blank=True)
+ 
+-    currency = models.ForeignKey(Currency, on_delete=models.PROTECT, related_name="clients")
+-    payment_terms = models.ForeignKey(PaymentTerm, on_delete=models.PROTECT, related_name="clients")
++    # Optional on the client: currency and payment terms are chosen on each
++    # quotation (pre-filled from here when set, otherwise picked by the user).
++    currency = models.ForeignKey(
++        Currency, on_delete=models.PROTECT, related_name="clients",
++        null=True, blank=True,
++    )
++    payment_terms = models.ForeignKey(
++        PaymentTerm, on_delete=models.PROTECT, related_name="clients",
++        null=True, blank=True,
++    )
+     sales_representative = models.ForeignKey(
+         settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True,
+         related_name="clients",
+@@ -302,6 +310,22 @@ class ReferenceDocument(AuditModel):
+     def __str__(self):
+         return self.name
+ 
++    @classmethod
++    def get_or_create_by_name(cls, name):
++        """
++        Resolve free-typed reference text to a ReferenceDocument. An existing
++        document with the same name (case-insensitive) is reused so the same
++        reference never gets duplicated; otherwise a new one is created so it
++        shows up in the suggestions for next time.
++        """
++        name = (name or "").strip()
++        if not name:
++            return None
++        existing = cls.objects.filter(name__iexact=name).first()
++        if existing:
++            return existing
++        return cls.objects.create(name=name)
++
+ 
+ class CompanyInfo(AuditModel):
+     """Singleton: the company's own details, used on every generated document."""
+diff --git a/masters/registry.py b/masters/registry.py
+index 27fa70a..02eae4a 100644
+--- a/masters/registry.py
++++ b/masters/registry.py
+@@ -72,9 +72,11 @@ MASTER_REGISTRY = {
+         "model": Item,
+         "verbose_name": "Item",
+         "verbose_name_plural": "Items",
+-        "fields": ["code", "name", "description", "item_type", "supplier", "currency", "cost_price", "selling_price",
++        # Selling price is not captured here: pricing is decided per line
++        # when a quotation is prepared. Supplier is likewise not part of the item.
++        "fields": ["code", "name", "description", "item_type", "currency", "cost_price",
+                    "vat_applicable", "vat_percentage", "is_active"],
+-        "list_columns": ["code", "name", "item_type", "supplier", "cost_price", "selling_price", "is_active"],
++        "list_columns": ["code", "name", "item_type", "cost_price", "is_active"],
+         "search_fields": ["code", "name"],
+         "ordering": ["item_type", "name"],
+     },
+diff --git a/masters/tests.py b/masters/tests.py
+index db679cf..3346463 100644
+--- a/masters/tests.py
++++ b/masters/tests.py
+@@ -6,7 +6,7 @@ from django.core.exceptions import ValidationError
+ from django.test import TestCase
+ from django.urls import reverse
+ 
+-from .models import Client, Commodity, Currency, Item, PaymentTerm, Port, Supplier
++from .models import Client, Commodity, Currency, Item, PaymentTerm, Port, ReferenceDocument, Supplier
+ 
+ User = get_user_model()
+ 
+@@ -253,7 +253,7 @@ class ItemCodeAutofillTests(TestCase):
+         data = resp.json()
+         self.assertEqual(data["code"], "FRT-AIR-001")
+         self.assertEqual(data["description"], "Airfreight charge per shipment, Dubai to Mombasa route")
+-        self.assertEqual(data["unit_price"], "2500.00")
++        self.assertNotIn("unit_price", data)
+         self.assertEqual(data["vat_percentage"], "13.00")
+ 
+     def test_item_autofill_falls_back_to_name_when_no_description(self):
+@@ -293,5 +293,25 @@ class QuotationItemPopulateFromItemTests(TestCase):
+         q = Quotation.objects.create(client=self.client_obj, currency=self.usd, payment_terms=self.terms)
+         line = QuotationItem.objects.create(quotation=q, item=self.item, quantity=2, unit_price=Decimal("0"))
+         self.assertEqual(line.description, "Customs clearance handling fee per unit")
+-        self.assertEqual(line.unit_price, Decimal("1000.00"))
++        # Price is no longer taken from the item; it is set per quotation line.
++        self.assertEqual(line.unit_price, Decimal("0"))
+         self.assertEqual(line.vat_percentage, Decimal("13.00"))
++
++
++class ClientOptionalFieldsTests(TestCase):
++    def test_client_can_be_saved_without_currency_or_payment_terms(self):
++        client_obj = Client.objects.create(company_name="No Terms Ltd")
++        self.assertIsNone(client_obj.currency_id)
++        self.assertIsNone(client_obj.payment_terms_id)
++        self.assertEqual(client_obj.autofill_payload()["currency_id"], None)
++
++
++class ReferenceDocumentFreeTextTests(TestCase):
++    def test_creates_document_from_typed_text_once(self):
++        first = ReferenceDocument.get_or_create_by_name("Client PO #4021")
++        second = ReferenceDocument.get_or_create_by_name("client po #4021 ")
++        self.assertEqual(first.pk, second.pk)
++        self.assertEqual(ReferenceDocument.objects.filter(name__iexact="Client PO #4021").count(), 1)
++
++    def test_blank_text_links_nothing(self):
++        self.assertIsNone(ReferenceDocument.get_or_create_by_name("   "))
+diff --git a/proforma/forms.py b/proforma/forms.py
+index cd3375d..10f46bf 100644
+--- a/proforma/forms.py
++++ b/proforma/forms.py
+@@ -9,10 +9,12 @@ fields and the line items are editable here, all while status == Draft.
+ from django import forms
+ from django.forms import inlineformset_factory
+ 
++from masters.forms import ReferenceDocumentTextFormMixin
++
+ from .models import ProformaInvoice, ProformaInvoiceItem
+ 
+ 
+-class ProformaInvoiceForm(forms.ModelForm):
++class ProformaInvoiceForm(ReferenceDocumentTextFormMixin):
+     class Meta:
+         model = ProformaInvoice
+         fields = [
+diff --git a/quotations/forms.py b/quotations/forms.py
+index b78843a..d0a2013 100644
+--- a/quotations/forms.py
++++ b/quotations/forms.py
+@@ -9,17 +9,19 @@ create/edit template can render an HTMX-friendly "add another line" /
+ from django import forms
+ from django.forms import inlineformset_factory
+ 
++from masters.forms import ReferenceDocumentTextFormMixin
++
+ from .models import Quotation, QuotationItem
+ 
+ 
+-class QuotationForm(forms.ModelForm):
++class QuotationForm(ReferenceDocumentTextFormMixin):
+     class Meta:
+         model = Quotation
+         fields = [
+             "client", "date", "valid_until", "shipment_type", "currency", "payment_terms",
+             "sales_representative", "origin_port", "destination_port",
+             "final_destination", "commodity", "commodity_quantity", "commodity_unit",
+-            "reference_document", "notes", "terms",
++            "notes", "terms",
+         ]
+         widgets = {
+             "date": forms.DateInput(attrs={"type": "date", "class": "form-control"}),
+diff --git a/quotations/models.py b/quotations/models.py
+index ac9cbd7..ee55ed6 100644
+--- a/quotations/models.py
++++ b/quotations/models.py
+@@ -259,8 +259,6 @@ class QuotationItem(models.Model):
+     def populate_from_item(self):
+         if self.item_id and not self.description:
+             self.description = self.item.description or self.item.name
+-        if self.item_id and not self.unit_price:
+-            self.unit_price = self.item.selling_price
+         if self.item_id and self.vat_percentage == 0 and self.item.vat_applicable:
+             self.vat_percentage = self.item.vat_percentage
+ 
+diff --git a/templates/base.html b/templates/base.html
+index fad3bec..4317644 100644
+--- a/templates/base.html
++++ b/templates/base.html
+@@ -113,7 +113,6 @@
+         <a class="nav-link" href="{% url 'masters:list' 'clients' %}"><i class="bi bi-people me-2"></i>Clients</a>
+         <a class="nav-link" href="{% url 'masters:list' 'suppliers' %}"><i class="bi bi-truck-front me-2"></i>Suppliers</a>
+         <a class="nav-link" href="{% url 'masters:list' 'items' %}"><i class="bi bi-box-seam me-2"></i>Items</a>
+-        <a class="nav-link" href="{% url 'masters:list' 'commodities' %}"><i class="bi bi-basket me-2"></i>Commodities</a>
+         <a class="nav-link" href="{% url 'masters:list' 'ports' %}"><i class="bi bi-geo-alt me-2"></i>Ports</a>
+         <a class="nav-link" href="{% url 'masters:list' 'transporters' %}"><i class="bi bi-bus-front me-2"></i>Transporters</a>
+         <a class="nav-link" href="{% url 'masters:list' 'currencies' %}"><i class="bi bi-currency-exchange me-2"></i>Currencies</a>
+diff --git a/templates/proforma/proforma_form.html b/templates/proforma/proforma_form.html
+index 0cab3e5..5a2652b 100644
+--- a/templates/proforma/proforma_form.html
++++ b/templates/proforma/proforma_form.html
+@@ -13,6 +13,13 @@
+             <div class="card"><div class="card-body">
+                 <h6 class="card-title text-muted">Header</h6>
+                 <div class="mb-2"><label class="form-label">Date</label>{{ form.date }}</div>
++                <div class="mb-2">
++                    <label class="form-label">Reference Document</label>
++                    {{ form.reference_document_name }}
++                    <div class="form-text">
++                        Type a reference such as a client PO number. It is saved automatically, and previous references are suggested when you start typing.
++                    </div>
++                </div>
+                 <div class="mb-2"><label class="form-label">Notes</label>{{ form.notes }}</div>
+                 <div class="mb-2"><label class="form-label">Terms</label>{{ form.terms }}</div>
+             </div></div>
+@@ -61,6 +68,12 @@
+         </div>
+     </div>
+ 
++    <datalist id="reference-document-suggestions">
++        {% for name in form.reference_suggestions %}
++            <option value="{{ name }}">
++        {% endfor %}
++    </datalist>
++
+     <div class="mt-3 d-flex gap-2">
+         <button type="submit" class="btn btn-primary">Save Changes</button>
+         <a href="{% url 'proforma:detail' object.pk %}" class="btn btn-outline-secondary">Cancel</a>
+diff --git a/templates/quotations/quotation_form.html b/templates/quotations/quotation_form.html
+index f660e67..2d683f2 100644
+--- a/templates/quotations/quotation_form.html
++++ b/templates/quotations/quotation_form.html
+@@ -20,10 +20,9 @@
+                 <div class="mb-2"><label class="form-label">Sales Representative</label>{{ form.sales_representative }}</div>
+                 <div class="mb-2">
+                     <label class="form-label">Reference Document</label>
+-                    {{ form.reference_document }}
++                    {{ form.reference_document_name }}
+                     <div class="form-text">
+-                        Link a supporting file (client PO, correspondence, etc.) instead of typing a reference.
+-                        <a href="{% url 'masters:create' 'reference-documents' %}" target="_blank">Upload a new one</a> if it isn't listed yet, then refresh this page.
++                        Type a reference such as a client PO number. It is saved automatically, and previous references are suggested when you start typing.
+                     </div>
+                 </div>
+             </div></div>
+@@ -54,6 +53,11 @@
+             <option value="{{ name }}">
+         {% endfor %}
+     </datalist>
++    <datalist id="reference-document-suggestions">
++        {% for name in form.reference_suggestions %}
++            <option value="{{ name }}">
++        {% endfor %}
++    </datalist>
+ 
+     <div class="card mt-3">
+         <div class="card-body">
+@@ -133,9 +137,8 @@ document.addEventListener('DOMContentLoaded', function () {
+ <script>
+ // Item autofill: selecting an item on any quotation line (including lines
+ // added later via "Add Line") fills that line's Code display, Description
+-// and Unit Price, and VAT % -- all three of which remain ordinary editable
+-// inputs afterward, so the auto-filled price/VAT can still be adjusted by
+-// hand for that specific line without touching the master Item record.
++// and VAT %. Unit Price is not filled from the item; it is entered per line.
++// All filled fields remain ordinary editable inputs.
+ // Delegated on #items-body (rather than bound per-row) so it keeps working
+ // for rows inserted after page load.
+ document.getElementById('items-body').addEventListener('change', function (e) {
+@@ -154,10 +157,8 @@ document.getElementById('items-body').addEventListener('change', function (e) {
+             if (!data) return;
+             if (codeCell) codeCell.textContent = data.code || '—';
+             var descField = row.querySelector('textarea[name$="-description"], input[name$="-description"]');
+-            var priceField = row.querySelector('input[name$="-unit_price"]');
+             var vatField = row.querySelector('input[name$="-vat_percentage"]');
+             if (descField) descField.value = data.description || '';
+-            if (priceField) priceField.value = data.unit_price || '0';
+             if (vatField) vatField.value = data.vat_percentage || '0';
+         })
+         .catch(function () { /* autofill is a convenience, not required */ });
