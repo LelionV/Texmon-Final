@@ -33,6 +33,7 @@ from simple_history.models import HistoricalRecords
 from core.models import AuditModel
 
 
+
 class Currency(AuditModel):
     name = models.CharField(max_length=50)
     code = models.CharField(max_length=3, unique=True, help_text="ISO 4217 code, e.g. USD, KES, EUR")
