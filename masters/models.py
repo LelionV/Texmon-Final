@@ -227,7 +227,7 @@ class Client(AuditModel):
     tax_number = models.CharField(max_length=50, blank=True)
 
     currency = models.ForeignKey(Currency, on_delete=models.PROTECT, related_name="clients", null=True, blank=True)
-    payment_terms = models.ForeignKey(PaymentTerm, on_delete=models.PROTECT, related_name="clients")
+    payment_terms = models.ForeignKey(PaymentTerm, on_delete=models.PROTECT, related_name="clients", , null=True, blank=True)
     sales_representative = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True,
         related_name="clients",
