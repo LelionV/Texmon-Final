@@ -143,7 +143,7 @@ class Supplier(AuditModel):
     tax_number = models.CharField(max_length=50, blank=True)
     currency = models.ForeignKey(Currency, on_delete=models.PROTECT, related_name="suppliers")
     payment_terms = models.ForeignKey(PaymentTerm, on_delete=models.PROTECT, related_name="suppliers")
-    supplier_type = models.CharField(max_length=20, choices=SupplierType.choices, default=SupplierType.GENERAL)
+    supplier_type = models.CharField(max_length=30, choices=SupplierType.choices, default=SupplierType.GENERAL)
     is_active = models.BooleanField(default=True)
     history = HistoricalRecords()
 
