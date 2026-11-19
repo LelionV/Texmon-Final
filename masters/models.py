@@ -133,7 +133,7 @@ class Supplier(AuditModel):
         INSURANCE = "insurance", "Insurance"
         GENERAL = "general", "General Vendor"
         PORT_AUTHORITY = "PORT_AUTHORITY", "Port Authority"
-        CONTAINER_FREIGHT_STATION = "CONTAINER_FREIGHT_STATION", "Port Authority"
+        CONTAINER_FREIGHT_STATION = "CONTAINER_FREIGHT_STATION", "Container Freight Station"
 
     company_name = models.CharField(max_length=150)
     contact_person = models.CharField(max_length=150, blank=True)
@@ -143,7 +143,7 @@ class Supplier(AuditModel):
     tax_number = models.CharField(max_length=50, blank=True)
     currency = models.ForeignKey(Currency, on_delete=models.PROTECT, related_name="suppliers")
     payment_terms = models.ForeignKey(PaymentTerm, on_delete=models.PROTECT, related_name="suppliers")
-    supplier_type = models.CharField(max_length=30, choices=SupplierType.choices, default=SupplierType.GENERAL)
+    supplier_type = models.CharField(max_length=50, choices=SupplierType.choices, default=SupplierType.GENERAL)
     is_active = models.BooleanField(default=True)
     history = HistoricalRecords()
 
