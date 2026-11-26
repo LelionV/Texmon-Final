@@ -2,6 +2,9 @@
 Shared PDF rendering helper for Django PDF views.
 Uses Playwright and Chromium to generate A4 PDF documents.
 """
+import os
+
+os.environ["PLAYWRIGHT_BROWSERS_PATH"] = "/tmp/.cache/ms-playwright"
 
 from playwright.sync_api import sync_playwright
 
